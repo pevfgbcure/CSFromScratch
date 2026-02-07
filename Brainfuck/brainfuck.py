@@ -83,4 +83,17 @@ class Brainfuck:
         return start
 
     def clamp0_255_wraparound(self, num: int) -> int:
-        pass
+        """Simulate 8-bit unsigned integer overflow by clamping the given number to the range [0, 255] with wraparound.
+
+        Args:
+            num (int): The number to clamp.
+
+        Returns:
+            int: The clamped number.
+        """
+        if num > 255:
+            return 0
+        elif num < 0:
+            return 255
+        else:
+            return num
