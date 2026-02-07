@@ -54,7 +54,33 @@ class Brainfuck:
             instruction_index += 1
 
     def find_bracket_match(self, start: int, forward: bool) -> int:
-        pass
+        """Find the index of the matching bracket for the bracket at the given location.
+
+        Args:
+            start (int): The location of the bracket to find a match for.
+            forward (bool): Whether to search forward (for "[") or backward (for "]").
+
+        Returns:
+            int: The location of the matching bracket, or the original location if no match was found.
+        """
+        in_between_brackets = 0
+        direction = 1 if forward else -1
+        location = start + direction
+        start_bracket = "[" if forward else "]"
+        end_bracket = "]" if forward else "["
+
+        while 0 <= location < len(self.source_code):
+            if self.source_code[location] == end_bracket:
+                if not in_between_brackets:
+                    return location
+                in_between_brackets -= 1
+            elif self.source_code[location] == start_bracket:
+                in_between_brackets += 1
+            location += direction
+
+        # Didn't find a match.
+        print(f"Error: could not find a match for {start_bracket} at {start}.")
+        return start
 
     def clamp0_255_wraparound(self, num: int) -> int:
         pass
