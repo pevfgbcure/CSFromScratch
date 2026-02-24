@@ -1,5 +1,7 @@
+import re
 from dataclasses import dataclass
 from enum import Enum
+from typing import TextIO
 
 
 class TokenType(Enum):
@@ -62,3 +64,66 @@ class Token:
     col_start: int
     col_end: int
     associated_value: str | int | None
+
+
+def tokenize(text_file: TextIO) -> list[Token]:
+    """Tokenizes a text file containing NanoBASIC code.
+
+    - Each token is represented as a Token dataclass, which contains the token type, line
+      number, starting column, ending column, and an optional associated value.
+
+    Args:
+        text_file (TextIO): A text file containing NanoBASIC code.
+
+    Returns:
+        list[Token]: A list of tokens found in the text file.
+    """
+    tokens: list[Token] = []
+    for line_num, line in enumerate(text_file.readlines(), start=1):
+        col_start: int = 1
+
+        while len(line) > 0:
+            found: re.Match | None = None
+            for possibility in TokenType:
+                # Try each pattern in the enum from the beginning, case-insensitive.
+                # If a match is found, store it in found.
+                found = re.match(possibility.pattern, line, re.IGNORECASE)
+                if found:
+                    col_end: int = col_start + found.end() - 1
+                    # Store tokens other than comments and whitespace.
+                    if (
+                        possibility is not TokenType.WHITESPACE
+                        and possibility is not TokenType.COMMENT
+                    ):
+                        associated_value: str | int | None = None
+                        if possibility.has_associated_value():
+                            if possibility is TokenType.NUMBER:
+                                associated_value = int(found.group(0))
+                            elif possibility is TokenType.VARIABLE:
+                                associated_value = found.group()
+                            elif possibility is TokenType.STRING:
+                                # Remove quotetion marks.
+                                associated_value = found.group(0)[1:-1]
+
+                        tokens.append(
+                            Token(
+                                possibility,
+                                line_num,
+                                col_start,
+                                col_end,
+                                associated_value,
+                            )
+                        )
+
+                    # Continue search for tokens in the same line, but after the current token.
+                    line = line[found.end() :]
+                    col_start = col_end + 1
+                    break  # Go around again for the next token.
+
+            # If we went through all the tokens and none of them were a match,
+            # then this must be an invalid token.
+            if not found:
+                print(f"Syntax error on line {line_num} column {col_start}")
+                break
+
+    return tokens
