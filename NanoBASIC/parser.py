@@ -1,7 +1,17 @@
 from typing import cast
 
 from NanoBASIC.errors import ParserError
-from NanoBASIC.nodes import IfStatement, NumericExpression, PrintStatement, Statement
+from NanoBASIC.nodes import (
+    BooleanExpression,
+    GoSubStatement,
+    GoToStatement,
+    IfStatement,
+    LetStatement,
+    NumericExpression,
+    PrintStatement,
+    ReturnStatement,
+    Statement,
+)
 from NanoBASIC.tokenizer import Token, TokenType
 
 
@@ -109,3 +119,54 @@ class Parser:
             boolean_expr=boolean_expression,
             then_statement=statement,
         )
+
+    def parse_let(self, line_id: int) -> LetStatement:
+        let_token = self.consume(TokenType.LET)
+        variable = self.consume(TokenType.VARIABLE)
+        self.consume(TokenType.EQUAL)
+        expression = self.parse_numeric_expression()
+        return LetStatement(
+            line_id=line_id,
+            line_num=let_token.line_num,
+            col_start=let_token.col_start,
+            col_end=expression.col_end,
+            name=cast(str, variable.associated_value),
+            expr=expression,
+        )
+
+    def parse_goto(self, line_id: int) -> GoToStatement:
+        goto_token = self.consume(TokenType.GOTO)
+        expression = self.parse_numeric_expression()
+        return GoToStatement(
+            line_id=line_id,
+            line_num=goto_token.line_num,
+            col_start=goto_token.col_start,
+            col_end=expression.col_end,
+            line_expr=expression,
+        )
+
+    def parse_gosub(self, line_id: int) -> GoSubStatement:
+        gosub_token = self.consume(TokenType.GOSUB)
+        expression = self.parse_numeric_expression()
+        return GoSubStatement(
+            line_id=line_id,
+            line_num=gosub_token.line_num,
+            col_start=gosub_token.col_start,
+            col_end=expression.col_end,
+            line_expr=expression,
+        )
+
+    def parse_return(self, line_id: int) -> ReturnStatement:
+        return_token = self.consume(TokenType.RETURN_T)
+        return ReturnStatement(
+            line_id=line_id,
+            line_num=return_token.line_num,
+            col_start=return_token.col_start,
+            col_end=return_token.col_end,
+        )
+
+    def parse_boolean_expression(self) -> BooleanExpression:
+        pass
+
+    def parse_numeric_expression(self) -> NumericExpression:
+        pass
