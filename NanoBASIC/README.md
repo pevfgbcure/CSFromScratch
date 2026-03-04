@@ -3,7 +3,7 @@
 ## Grammar definition
 
 ```BNF
-<line> ::= <number> <statement> '\n' | 'REM' .\*'\n'
+<line> ::= <number> <statement> '\n' | 'REM' .*'\n'
 
 <statement> ::= 'PRINT' <expr-list> |
     'IF' <boolean-expr> 'THEN' <statement> |
@@ -12,17 +12,17 @@
     'GOSUB' <expression> |
     'RETURN'
 
-<expr-list> ::= (<string> | <expression>) (',' (<string> | <expression>))\*
+<expr-list> ::= (<string> | <expression>) (',' (<string> | <expression>))*
 
-<expression> ::= <term> (('+'|'-') <term>)\*
+<expression> ::= <term> (('+'|'-') <term>)*
 
-<term> ::= <factor> (('_'|'/') <factor>)_
+<term> ::= <factor> (('*'|'/') <factor>)*
 
 <factor> ::= ('-'|ε) <factor> | <var> | <number> | '('<expression>')'
 
-<var> ::= ('_'|<letter>) ('_'|<letter>)\*
+<var> ::= ('_'|<letter>) ('_'|<letter>)*
 
-<number> ::= <digit> <digit>\*
+<number> ::= <digit> <digit>*
 
 <digit> ::= '0' | '1' | ... | '8' | '9'
 
@@ -32,6 +32,6 @@
 
 <boolean-expr> ::= <expression> <relop> <expression>
 
-<string> ::= '"' .\* '"'
+<string> ::= '"' .* '"'
 
 ```
