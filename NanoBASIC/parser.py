@@ -2,15 +2,19 @@ from typing import cast
 
 from NanoBASIC.errors import ParserError
 from NanoBASIC.nodes import (
+    BinaryOperation,
     BooleanExpression,
     GoSubStatement,
     GoToStatement,
     IfStatement,
     LetStatement,
+    NumberLiteral,
     NumericExpression,
     PrintStatement,
     ReturnStatement,
     Statement,
+    UnaryOperation,
+    VarRetrieve,
 )
 from NanoBASIC.tokenizer import Token, TokenType
 
@@ -166,7 +170,130 @@ class Parser:
         )
 
     def parse_boolean_expression(self) -> BooleanExpression:
-        pass
+        left = self.parse_numeric_expression()
+        if self.current.kind in {
+            TokenType.GREATER,
+            TokenType.GREATER_EQUAL,
+            TokenType.EQUAL,
+            TokenType.LESS,
+            TokenType.LESS_EQUAL,
+            TokenType.NOT_EQUAL,
+        }:
+            operator = self.consume(self.current.kind)
+            right = self.parse_numeric_expression()
+            return BooleanExpression(
+                line_num=left.line_num,
+                col_start=left.col_start,
+                col_end=right.col_end,
+                operator=operator.kind,
+                left_expr=left,
+                right_expr=right,
+            )
+
+        raise ParserError(
+            f"Expected boolean operator but found {self.current.kind}.", self.current
+        )
 
     def parse_numeric_expression(self) -> NumericExpression:
-        pass
+        left = self.parse_term()
+        # Keep parsing +s and -s until there are no more
+        while True:
+            if self.out_of_tokens:  # What if expression is end of file?
+                return left
+
+            if self.current.kind is TokenType.PLUS:
+                self.consume(TokenType.PLUS)
+                right = self.parse_term()
+                left = BinaryOperation(
+                    line_num=left.line_num,
+                    col_start=left.col_start,
+                    col_end=right.col_end,
+                    operator=TokenType.PLUS,
+                    left_expr=left,
+                    right_expr=right,
+                )
+            elif self.current.kind is TokenType.MINUS:
+                self.consume(TokenType.MINUS)
+                right = self.parse_term()
+                left = BinaryOperation(
+                    line_num=left.line_num,
+                    col_start=left.col_start,
+                    col_end=right.col_end,
+                    operator=TokenType.MINUS,
+                    left_expr=left,
+                    right_expr=right,
+                )
+            else:
+                break  # No more, must be end of expression.
+
+        return left
+
+    def parse_term(self) -> NumericExpression:
+        left = self.parse_factor()
+        # Keep parsing *s and /s until there are no more.
+        while True:
+            if self.out_of_tokens:  # What if expression is end of file?
+                return left
+
+            if self.current.kind is TokenType.MULTIPLY:
+                self.consume(TokenType.MULTIPLY)
+                right = self.parse_factor()
+                left = BinaryOperation(
+                    line_num=left.line_num,
+                    col_start=left.col_start,
+                    col_end=right.col_end,
+                    operator=TokenType.MULTIPLY,
+                    left_expr=left,
+                    right_expr=right,
+                )
+            elif self.current.kind is TokenType.DIVIDE:
+                self.consume(TokenType.DIVIDE)
+                right = self.parse_factor()
+                left = BinaryOperation(
+                    line_num=left.line_num,
+                    col_start=left.col_start,
+                    col_end=right.col_end,
+                    operator=TokenType.DIVIDE,
+                    left_expr=left,
+                    right_expr=right,
+                )
+            else:
+                break  # No more, must be end of expression.
+
+        return left
+
+    def parse_factor(self) -> NumericExpression:
+        if self.current.kind is TokenType.VARIABLE:
+            variable = self.consume(TokenType.VARIABLE)
+            return VarRetrieve(
+                line_num=variable.line_num,
+                col_start=variable.col_start,
+                col_end=variable.col_end,
+                name=cast(str, variable.associated_value),
+            )
+        elif self.current.kind is TokenType.NUMBER:
+            number = self.consume(TokenType.NUMBER)
+            return NumberLiteral(
+                line_num=number.line_num,
+                col_start=number.col_start,
+                col_end=number.col_end,
+                number=int(cast(str, number.associated_value)),
+            )
+        elif self.current.kind is TokenType.OPEN_PAREN:
+            self.consume(TokenType.OPEN_PAREN)
+            expression = self.parse_numeric_expression()
+            if self.current.kind is not TokenType.CLOSE_PAREN:
+                raise ParserError("Expected matching close parenthesis.", self.current)
+            self.consume(TokenType.CLOSE_PAREN)
+            return expression
+        elif self.current.kind is TokenType.MINUS:
+            minus = self.consume(TokenType.MINUS)
+            expression = self.parse_factor()
+            return UnaryOperation(
+                line_num=minus.line_num,
+                col_start=minus.col_start,
+                col_end=expression.col_end,
+                operator=TokenType.MINUS,
+                expr=expression,
+            )
+        raise ParserError("Unexpected token in numeric expression.", self.current)
