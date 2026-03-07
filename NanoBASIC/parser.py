@@ -20,16 +20,25 @@ from NanoBASIC.tokenizer import Token, TokenType
 
 
 class Parser:
+    """Parser for NanoBASIC. Takes in a list of tokens and produces an AST."""
+
     def __init__(self, tokens: list[Token]):
+        """Initialize the parser with a list of tokens.
+
+        Args:
+            tokens: The list of tokens to parse.
+        """
         self.tokens = tokens
         self.token_index: int = 0
 
     @property
     def out_of_tokens(self) -> bool:
+        """Whether the parser has reached the end of the token list."""
         return self.token_index >= len(self.tokens)
 
     @property
     def current(self) -> Token:
+        """The current token being parsed."""
         if self.out_of_tokens:
             raise (ParserError(f"No tokens after {self.previous.kind}", self.previous))
 
@@ -37,9 +46,22 @@ class Parser:
 
     @property
     def previous(self) -> Token:
+        """The most recently consumed token."""
         return self.tokens[self.token_index - 1]
 
     def consume(self, kind: TokenType) -> Token:
+        """Consume the current token if it is of the expected kind, otherwise raise
+        an error.
+
+        Args:
+            kind: The expected kind of the current token.
+
+        Returns:
+            The consumed token.
+
+        Raises:
+            ParserError: If the current token is not of the expected kind.
+        """
         if self.current.kind is kind:
             self.token_index += 1
             return self.previous
@@ -50,6 +72,11 @@ class Parser:
         )
 
     def parse(self) -> list[Statement]:
+        """Parse the list of tokens into an AST.
+
+        Returns:
+            The list of statements in the program.
+        """
         statements: list[Statement] = []
         while not self.out_of_tokens:
             statement = self.parse_line()
@@ -57,6 +84,12 @@ class Parser:
         return statements
 
     def parse_line(self) -> Statement:
+        """Parse a line of the program, which starts with a line number and is
+        followed by a statement.
+
+        Returns:
+            The statement on the line.
+        """
         number = self.consume(TokenType.NUMBER)
         return self.parse_statement(cast(int, number.associated_value))
 
@@ -78,6 +111,16 @@ class Parser:
         raise ParserError("Expected to find start of statement.", self.current)
 
     def parse_print(self, line_id: int) -> PrintStatement:
+        """Parse a print statement, which consists of the PRINT keyword followed by a list
+        of strings and numeric expressions to print, separated by commas.
+
+        Returns:
+            The parsed PrintStatement.
+
+        Raises:
+            ParserError: If the print statement is not well-formed, such as if it contains
+            something other than strings and numeric expressions.
+        """
         print_token = self.consume(TokenType.PRINT)
         printables: list[str | NumericExpression] = []
         last_col: int = print_token.col_end
@@ -111,6 +154,12 @@ class Parser:
         )
 
     def parse_if(self, line_id: int) -> IfStatement:
+        """Parse an if statement, which consists of the IF keyword followed by a boolean expression,
+        the THEN keyword, and a statement to execute if the boolean expression is true.
+
+        Returns:
+            The parsed IfStatement.
+        """
         if_token = self.consume(TokenType.IF_T)
         boolean_expression = self.parse_boolean_expression()
         self.consume(TokenType.THEN)
@@ -125,6 +174,12 @@ class Parser:
         )
 
     def parse_let(self, line_id: int) -> LetStatement:
+        """Parse a let statement, which consists of the LET keyword followed by a variable name, an equal sign,
+        and a numeric expression to assign to the variable.
+
+        Returns:
+            The parsed LetStatement.
+        """
         let_token = self.consume(TokenType.LET)
         variable = self.consume(TokenType.VARIABLE)
         self.consume(TokenType.EQUAL)
@@ -139,6 +194,12 @@ class Parser:
         )
 
     def parse_goto(self, line_id: int) -> GoToStatement:
+        """Parse a goto statement, which consists of the GOTO keyword followed by a numeric expression
+        representing the line number to jump to.
+
+        Returns:
+            The parsed GoToStatement.
+        """
         goto_token = self.consume(TokenType.GOTO)
         expression = self.parse_numeric_expression()
         return GoToStatement(
@@ -150,6 +211,12 @@ class Parser:
         )
 
     def parse_gosub(self, line_id: int) -> GoSubStatement:
+        """Parse a gosub statement, which consists of the GOSUB keyword followed by a numeric expression
+        representing the line number to jump to.
+
+        Returns:
+            The parsed GoSubStatement.
+        """
         gosub_token = self.consume(TokenType.GOSUB)
         expression = self.parse_numeric_expression()
         return GoSubStatement(
@@ -161,6 +228,11 @@ class Parser:
         )
 
     def parse_return(self, line_id: int) -> ReturnStatement:
+        """Parse a return statement, which consists of the RETURN keyword.
+
+        Returns:
+            The parsed ReturnStatement.
+        """
         return_token = self.consume(TokenType.RETURN_T)
         return ReturnStatement(
             line_id=line_id,
@@ -170,6 +242,16 @@ class Parser:
         )
 
     def parse_boolean_expression(self) -> BooleanExpression:
+        """Parse a boolean expression, which consists of two numeric expressions separated
+        by a boolean operator.
+
+        Returns:
+            The parsed BooleanExpression.
+
+        Raises:
+            ParserError: If the boolean expression is not well-formed, such as if it does
+            not contain a boolean operator.
+        """
         left = self.parse_numeric_expression()
         if self.current.kind in {
             TokenType.GREATER,
@@ -195,6 +277,11 @@ class Parser:
         )
 
     def parse_numeric_expression(self) -> NumericExpression:
+        """Parse a numeric expression, which consists of terms separated by '+' and '-'.
+
+        Returns:
+             The parsed NumericExpression.
+        """
         left = self.parse_term()
         # Keep parsing +s and -s until there are no more
         while True:
@@ -229,6 +316,11 @@ class Parser:
         return left
 
     def parse_term(self) -> NumericExpression:
+        """Parse a term, which consists of factors separated by '*' and '/'.
+
+        Returns:
+            The parsed NumericExpression.
+        """
         left = self.parse_factor()
         # Keep parsing *s and /s until there are no more.
         while True:
@@ -263,6 +355,14 @@ class Parser:
         return left
 
     def parse_factor(self) -> NumericExpression:
+        """Parse a factor, which could be a variable, a number, a parenthesized expression, or a unary minus.
+
+        Returns:
+            The parsed NumericExpression.
+
+        Raises:
+            ParserError: If the factor is not well-formed, such as if it is an unexpected token.
+        """
         if self.current.kind is TokenType.VARIABLE:
             variable = self.consume(TokenType.VARIABLE)
             return VarRetrieve(
