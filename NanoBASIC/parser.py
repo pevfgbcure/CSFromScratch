@@ -99,7 +99,7 @@ class Parser:
                 return self.parse_print(line_id)
             case TokenType.IF_T:
                 return self.parse_if(line_id)
-            case TokenType.LERT:
+            case TokenType.LET:
                 return self.parse_let(line_id)
             case TokenType.GOTO:
                 return self.parse_goto(line_id)

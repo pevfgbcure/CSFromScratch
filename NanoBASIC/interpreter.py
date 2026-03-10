@@ -1,9 +1,8 @@
 from collections import deque
 
-from tokenizer import TokenType
-
 import NanoBASIC.nodes as nodes
 from NanoBASIC.errors import InterpreterError
+from NanoBASIC.tokenizer import TokenType
 
 
 class Interpreter:

@@ -96,7 +96,7 @@ def tokenize(text_file: TextIO) -> list[Token]:
                         and possibility is not TokenType.COMMENT
                     ):
                         associated_value: str | int | None = None
-                        if possibility.has_associated_value():
+                        if possibility.has_associated_value:
                             if possibility is TokenType.NUMBER:
                                 associated_value = int(found.group(0))
                             elif possibility is TokenType.VARIABLE:
