@@ -113,6 +113,12 @@ class NanoBASICTestCase(unittest.TestCase):
         expected = "120\n"
         self.assertEqual(program_output, expected)
 
+    def test_print_with_escaped_quote(self):
+        """Test that an escaped quote inside a string is interpreted correctly."""
+        program_output = run(self.example_folder / "print_escaped_quote.bas")
+        expected = 'He said "Hello World!"\n'
+        self.assertEqual(program_output, expected)
+
     def test_gcd(self):
         """Test the NanoBASIC interpreter by running a program that calculates and
         prints the greatest common divisor of two numbers.
