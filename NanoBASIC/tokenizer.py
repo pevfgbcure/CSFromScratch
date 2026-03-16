@@ -102,9 +102,9 @@ def tokenize(text_file: TextIO) -> list[Token]:
                             elif possibility is TokenType.VARIABLE:
                                 associated_value = found.group()
                             elif possibility is TokenType.STRING:
-                                # Remove quotetion marks.
-                                associated_value = found.group(0)[1:-1]
-
+                                # Remove quotation marks and unescape escapes.
+                                raw_text: str = found.group(0)[1:-1]
+                                associated_value = raw_text.replace('\\"', '"')
                         tokens.append(
                             Token(
                                 possibility,
