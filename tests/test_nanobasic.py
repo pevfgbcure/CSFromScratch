@@ -116,7 +116,7 @@ class NanoBASICTestCase(unittest.TestCase):
     def test_print_with_escaped_quote(self):
         """Test that an escaped quote inside a string is interpreted correctly."""
         program_output = run(self.example_folder / "print_escaped_quote.bas")
-        expected = 'He said "Hello World!"\n'
+        expected = 'Hello, world\t5\tHe said "hello"\n'
         self.assertEqual(program_output, expected)
 
     def test_gcd(self):

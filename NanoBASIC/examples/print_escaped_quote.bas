@@ -1,1 +1,1 @@
-10 PRINT "He said \"Hello World!\""
+10 PRINT "Hello, world", 2 + 3, "He said \"hello\""
