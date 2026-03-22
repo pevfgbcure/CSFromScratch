@@ -146,3 +146,12 @@ class IfStatement(Statement):
 
     boolean_expr: BooleanExpression
     then_statement: Statement
+
+
+@dataclass(frozen=True)
+class InputStatement(Statement):
+    """Represents an INPUT statement, which prompts the user for a number and
+    stores it in a variable with *name*.
+    """
+
+    name: str

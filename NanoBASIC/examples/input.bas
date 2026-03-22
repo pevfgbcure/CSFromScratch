@@ -1,0 +1,3 @@
+10 INPUT A
+20 LET A = A + 1
+30 PRINT A

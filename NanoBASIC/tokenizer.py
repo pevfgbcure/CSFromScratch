@@ -32,6 +32,7 @@ class TokenType(Enum):
     DIVIDE = (r"/", False)
     OPEN_PAREN = (r"\(", False)
     CLOSE_PAREN = (r"\)", False)
+    INPUT = (r"input", False)
     VARIABLE = (r"[A-Za-z_]+", True)
     NUMBER = (r"-?[0-9]+", True)
     STRING = (r'"(?:[^"\\]|\\.)*"', True)

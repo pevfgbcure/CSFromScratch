@@ -7,6 +7,7 @@ from NanoBASIC.nodes import (
     GoSubStatement,
     GoToStatement,
     IfStatement,
+    InputStatement,
     LetStatement,
     NumberLiteral,
     NumericExpression,
@@ -97,6 +98,8 @@ class Parser:
         match self.current.kind:
             case TokenType.PRINT:
                 return self.parse_print(line_id)
+            case TokenType.INPUT:
+                return self.parse_input(line_id)
             case TokenType.IF_T:
                 return self.parse_if(line_id)
             case TokenType.LET:
@@ -151,6 +154,23 @@ class Parser:
             col_start=print_token.col_start,
             col_end=last_col,
             printables=printables,
+        )
+
+    def parse_input(self, line_id: int) -> InputStatement:
+        """Parse an input statement, which consists of the INPUT keyword followed by a variable name.
+
+        Returns:
+            The parsed InputStatement.
+        """
+        input_token = self.consume(TokenType.INPUT)
+        variable = self.consume(TokenType.VARIABLE)
+
+        return InputStatement(
+            line_id=line_id,
+            line_num=input_token.line_num,
+            col_start=input_token.col_start,
+            col_end=variable.col_end,
+            name=cast(str, variable.associated_value),
         )
 
     def parse_if(self, line_id: int) -> IfStatement:

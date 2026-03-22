@@ -106,6 +106,19 @@ class Interpreter:
                 print(accumulated_string)
                 self.statement_index += 1
 
+            case nodes.InputStatement(name=name):
+                raw = input("? ").strip()
+                try:
+                    value = int(raw)
+                except ValueError:
+                    raise InterpreterError(
+                        f"Expected numeric input for variable {name}. Got '{raw}'.",
+                        self.current,
+                    )
+
+                self.variable_table[name] = value
+                self.statement_index += 1
+
             case nodes.IfStatement(
                 boolean_expr=boolean_expr, then_statement=then_statement
             ):

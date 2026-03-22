@@ -6,6 +6,7 @@
 <line> ::= <number> <statement> '\n' | 'REM' .*'\n'
 
 <statement> ::= 'PRINT' <expr-list> |
+    'INPUT' <var> |
     'IF' <boolean-expr> 'THEN' <statement> |
     'GOTO' <expression> |
     'LET' <var> '=' <expression> |

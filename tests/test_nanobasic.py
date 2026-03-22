@@ -2,6 +2,7 @@ import sys
 import unittest
 from io import StringIO
 from pathlib import Path
+from unittest.mock import patch
 
 from NanoBASIC.executioner import execute
 
@@ -126,6 +127,24 @@ class NanoBASICTestCase(unittest.TestCase):
         program_output = run(self.example_folder / "gcd.bas")
         expected = "7\n"
         self.assertEqual(program_output, expected)
+
+    def test_input(self):
+        """Test the NanoBASIC interpreter by running a program that takes a number
+        as input and prints it plus one.
+        """
+        with patch("builtins.input", return_value="5"):
+            program_output = run(self.example_folder / "input.bas")
+            expected = "6\n"
+            self.assertEqual(program_output, expected)
+
+    def test_input_sum_two_numbers(self):
+        """Test the NanoBASIC interpreter by running a program that takes two
+        numbers as input and prints their sum.
+        """
+        with patch("builtins.input", side_effect=["3", "4"]):
+            program_output = run(self.example_folder / "input_sum.bas")
+            expected = "7\n"
+            self.assertEqual(program_output, expected)
 
 
 if __name__ == "__main__":
