@@ -50,6 +50,9 @@ class BinaryOperation(NumericExpression):
     def __repr__(self) -> str:
         return f"{self.left_expr} {self.operator} {self.right_expr}"
 
+    def __str__(self) -> str:
+        return self.__repr__()
+
 
 @dataclass(frozen=True)
 class UnaryOperation(NumericExpression):
@@ -61,6 +64,9 @@ class UnaryOperation(NumericExpression):
     def __repr__(self) -> str:
         return f"{self.operator}{self.expr}"
 
+    def __str__(self) -> str:
+        return self.__repr__()
+
 
 @dataclass(frozen=True)
 class NumberLiteral(NumericExpression):
@@ -68,12 +74,18 @@ class NumberLiteral(NumericExpression):
 
     number: int
 
+    def __str__(self) -> str:
+        return str(self.number)
+
 
 @dataclass(frozen=True)
 class VarRetrieve(NumericExpression):
     """Represents a variable's *name* that will have its value retrieved."""
 
     name: str
+
+    def __str__(self) -> str:
+        return self.name
 
 
 @dataclass(frozen=True)
@@ -88,8 +100,11 @@ class BooleanExpression(Node):
     left_expr: NumericExpression
     right_expr: NumericExpression
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.left_expr} {self.operator} {self.right_expr}"
+
+    def __str__(self) -> str:
+        return self.__repr__()
 
 
 @dataclass(frozen=True)
@@ -99,12 +114,18 @@ class LetStatement(Statement):
     name: str
     expr: NumericExpression
 
+    def __str__(self) -> str:
+        return f"LET {self.name} = {self.expr}"
+
 
 @dataclass(frozen=True)
 class GoToStatement(Statement):
     """Represents a GOTO statement, transferring control to *line_expr*."""
 
     line_expr: NumericExpression
+
+    def __str__(self) -> str:
+        return f"GOTO {self.line_expr}"
 
 
 @dataclass(frozen=True)
@@ -117,6 +138,9 @@ class GoSubStatement(Statement):
 
     line_expr: NumericExpression
 
+    def __str__(self) -> str:
+        return f"GOSUB {self.line_expr}"
+
 
 @dataclass(frozen=True)
 class ReturnStatement(Statement):
@@ -124,7 +148,8 @@ class ReturnStatement(Statement):
     the last GOSUB statement.
     """
 
-    pass
+    def __str__(self) -> str:
+        return "RETURN"
 
 
 @dataclass(frozen=True)
@@ -134,6 +159,9 @@ class PrintStatement(Statement):
     """
 
     printables: list[str | NumericExpression]
+
+    def __str__(self) -> str:
+        return f"PRINT {', '.join(map(str, self.printables))}"
 
 
 @dataclass(frozen=True)
@@ -147,6 +175,9 @@ class IfStatement(Statement):
     boolean_expr: BooleanExpression
     then_statement: Statement
 
+    def __str__(self) -> str:
+        return f"IF {self.boolean_expr} THEN {self.then_statement}"
+
 
 @dataclass(frozen=True)
 class InputStatement(Statement):
@@ -155,3 +186,6 @@ class InputStatement(Statement):
     """
 
     name: str
+
+    def __str__(self) -> str:
+        return f"INPUT {self.name}"
