@@ -1,5 +1,8 @@
+from argparse import ArgumentParser
+
 from PIL import Image
-from RetroDither.macpaint import MAX_HEIGHT, MAX_WIDTH
+from RetroDither.dither import dither
+from RetroDither.macpaint import MAX_HEIGHT, MAX_WIDTH, write_macpaint_file
 
 
 def prepare(file_name: str) -> Image.Image:
@@ -25,3 +28,28 @@ def prepare(file_name: str) -> Image.Image:
             image.thumbnail(new_size, Image.Resampling.LANCZOS)
         # Convert to grayscale
         return image.convert("L")
+
+
+if __name__ == "__main__":
+    argument_parser = ArgumentParser("RetroDither")
+    argument_parser.add_argument("image_file", help="Input image file.")
+    argument_parser.add_argument("output_file", help="Resulting MacPaint file.")
+    argument_parser.add_argument(
+        "-g",
+        "--gif",
+        default=False,
+        action="store_true",
+        help="Create an output gif as well.",
+    )
+    arguments = argument_parser.parse_args()
+    original_image = prepare(arguments.image_file)
+    dithered_data = dither(original_image)
+    if arguments.gif:
+        out_image = Image.frombytes("L", original_image.size, dithered_data.tobytes())
+        out_image.save(arguments.output_file + ".gif")
+    write_macpaint_file(
+        dithered_data,
+        arguments.output_file,
+        original_image.width,
+        original_image.height,
+    )
