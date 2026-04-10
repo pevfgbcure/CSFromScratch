@@ -58,3 +58,49 @@ def prepare(data: array, width: int, height: int) -> array:
     white_height_bits = array("B", [0] * ((remaining_height * MAX_WIDTH) // 8))
     bits_array += white_height_bits
     return bits_array
+
+
+def run_length_encode(original_data: array) -> array:
+    """Encodes the original data using run-length encoding.
+
+    - 0 to 127 (inclusive) means that the next (n + 1) bytes are not the same and should be copied as is.
+    - 129 to 255 (inclusive) means that the next byte should be repeated (257 - n) times.
+    - 128 is not used and should be ignored if it appears.
+
+    Args:
+        original_data: An array of bytes to encode.
+
+    Returns:
+        An array of bytes representing the run-length encoded data.
+    """
+
+    # Find how many of the same bytes are in a row from the 'start' position.
+    def take_same(source: array, start: int) -> int:
+        count = 0
+        while (
+            start + count + 1 < len(source)
+            and source[start + count] == source[start + count + 1]
+        ):
+            count += 1
+        return count + 1 if count > 0 else 0
+
+    rle_data = array("B")
+    # Divide data into MAX_WIDTH size boundaries by line.
+    for row_start in range(0, len(original_data), MAX_WIDTH // 8):
+        row_data = original_data[row_start : (row_start + (MAX_WIDTH // 8))]
+        byte_index = 0
+        while byte_index < len(row_data):
+            not_same_bytes = 0
+            while (
+                (same_bytes := take_same(row_data, byte_index + not_same_bytes)) == 0
+            ) and (byte_index + not_same_bytes < len(row_data)):
+                not_same_bytes += 1
+            if not_same_bytes > 0:
+                rle_data.append(not_same_bytes - 1)
+                rle_data += row_data[byte_index : byte_index + not_same_bytes]
+                byte_index += not_same_bytes
+            if same_bytes > 0:
+                rle_data.append(257 - same_bytes)
+                rle_data.append(row_data[byte_index])
+                byte_index += same_bytes
+    return rle_data
