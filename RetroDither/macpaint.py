@@ -1,4 +1,6 @@
 from array import array
+from datetime import datetime
+from pathlib import Path
 
 MAX_WIDTH = 576
 MAX_HEIGHT = 720
@@ -104,3 +106,39 @@ def run_length_encode(original_data: array) -> array:
                 rle_data.append(row_data[byte_index])
                 byte_index += same_bytes
     return rle_data
+
+
+def macbinary_header(outfile: str, data_size: int) -> array:
+    """Creates a MacBinary header for the given output file name and data size.
+
+    Args:
+        outfile: The name of the output file.
+        data_size: The size of the data fork in bytes.
+
+    Returns:
+        An array of bytes representing the MacBinary header.
+    """
+    macbinary = array("B", [0] * MACBINARY_LENGTH)
+    filename = Path(outfile).stem
+    filename = (
+        filename[:63] if len(filename) > 63 else filename
+    )  # Limit to 63 chars max.
+    macbinary[1] = len(filename)  # Filename length.
+    macbinary[2 : (2 + len(filename))] = array(
+        "B", filename.encode("mac_roman")
+    )  # Filename.
+    macbinary[65:69] = array("B", "PNTG".encode("mac_roman"))  # File type.
+    macbinary[69:73] = array("B", "MPNT".encode("mac_roman"))  # File creator.
+    macbinary[83:87] = array(
+        "B", data_size.to_bytes(4, byteorder="big")
+    )  # Size of data fork.
+    timestamp = int(
+        (datetime.now() - datetime(1904, 1, 1)).total_seconds()
+    )  # Mac timestamp.
+    macbinary[91:95] = array(
+        "B", timestamp.to_bytes(4, byteorder="big")
+    )  # Creation stamp.
+    macbinary[95:99] = array(
+        "B", timestamp.to_bytes(4, byteorder="big")
+    )  # Modification stamp.
+    return macbinary
