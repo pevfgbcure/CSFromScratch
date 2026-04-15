@@ -142,3 +142,29 @@ def macbinary_header(outfile: str, data_size: int) -> array:
         "B", timestamp.to_bytes(4, byteorder="big")
     )  # Modification stamp.
     return macbinary
+
+
+def write_macpaint_file(data: array, out_file: str, width: int, height: int):
+    """Writes the given data to a MacPaint file with the specified output file name, width, and height.
+
+    Args:
+        data: An array of bytes where each byte is either 0 or 255, representing the dithered image.
+        out_file: The name of the output file (without extension).
+        width: The width of the original dithered image.
+        height: The height of the original dithered image.
+    """
+    bits_array = prepare(data, width, height)
+    rle = run_length_encode(bits_array)
+    data_size = len(rle) + HEADER_LENGTH  # Header requires this.
+    output = (
+        macbinary_header(out_file, data_size) + array("B", [0] * HEADER_LENGTH) + rle
+    )
+    output[MACBINARY_LENGTH + 3] = 2  # Data Fork Header Signature.
+    # The MacBinary format requires that there be padding of 0s up to a
+    # multiple of 128 bytes for the data fork.
+    padding = 128 - (data_size % 128)
+    if padding > 0:
+        output += array("B", [0] * padding)
+
+    with open(out_file + ".bin", "wb") as fp:
+        output.tofile(fp)
