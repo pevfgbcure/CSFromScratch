@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 
 from PIL import Image
+
 from RetroDither.dither import dither
 from RetroDither.macpaint import MAX_HEIGHT, MAX_WIDTH, write_macpaint_file
 
@@ -46,7 +47,7 @@ if __name__ == "__main__":
     dithered_data = dither(original_image)
     if arguments.gif:
         out_image = Image.frombytes("L", original_image.size, dithered_data.tobytes())
-        out_image.save(arguments.output_file + ".gif")
+        out_image.save(arguments.output_file + ".gif", format="GIF")
     write_macpaint_file(
         dithered_data,
         arguments.output_file,
