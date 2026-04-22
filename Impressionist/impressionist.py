@@ -87,3 +87,60 @@ class Impressionist:
             end = timer()
             print(f"{end - start} seconds elapsed. {len(self.shapes)} shapes created.")
             self.create_output(output_file, length, vector, animation_length)
+
+    def difference(self, other_image: Image.Image) -> float:
+        """Returns a ratio of how different the other image is from the original image.
+        0 means the same, 1 means completely different.
+        
+        Args:
+            other_image: The image to compare to the original.
+            
+        Returns:
+            A float between 0 and 1 representing how different the other image is
+                from the original.
+        """
+
+        diff = ImageChops.difference(self.original, other_image)
+        stat = ImageStat.Stat(diff)
+        diff_ratio = sum(stat.mean) / (len(stat.mean) * 255)
+        return diff_ratio
+    
+    def random_coordinates(self) -> CoordList:
+        """Generates a list of random coordinates for the shape to be drawn at.
+        The number of coordinates depends on the shape type.
+
+        Returns:
+            A list of random coordinates for the shape to be drawn at.
+        """
+        
+        num_coordinates = 4 # For an ellipse of a line.
+        if self.shape_type == ShapeType.TRIANGLE:
+            num_coordinates = 6
+        elif self.shape_type == ShapeType.QUADRILATERAL:
+            num_coordinates = 8
+        coordinates = []
+        for d in range(num_coordinates):
+            if d % 2 == 0: # x-coordinates.
+                coordinates.append(random.randint(0, self.original.width))
+            else: # y-coordinates.
+                coordinates.append(random.randint(0, self.original.height))
+        return coordinates
+    
+    @staticmethod
+    def bounding_box(coordinates: CoordList) -> tuple[int, int, int, int]:
+        """Returns the bounding box of the shape defined by the coordinates.
+        
+        Args:
+            coordinates: A list of coordinates defining the shape.
+            
+        Returns:
+            A tuple of four integers representing the bounding box (x1, y1, x2, y2).
+        """
+
+        xcoords = coordinates[::2]
+        ycoords = coordinates[1::2]
+        x1 = min(xcoords)
+        y1 = min(ycoords)
+        x2 = max(xcoords)
+        y2 = max(ycoords)
+        return x1, y1, x2, y2
