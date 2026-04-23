@@ -3,9 +3,9 @@ from enum import Enum
 from math import trunc
 from timeit import default_timer as timer
 
-from PIL import Image, ImageChops, ImageDraw, ImageStat
+from PIL import Image, ImageChops, ImageDraw, ImageStat  # noqa: F401
 
-from Impressionist.svg import SVG
+from Impressionist.svg import SVG  # noqa: F401
 
 ColorMethod = Enum("ColorMethod", "RANDOM AVERAGE COMMON")
 ShapeType = Enum("ShapeType", "ELLIPSE TRIANGLE QUADRILATERAL LINE")
@@ -91,10 +91,10 @@ class Impressionist:
     def difference(self, other_image: Image.Image) -> float:
         """Returns a ratio of how different the other image is from the original image.
         0 means the same, 1 means completely different.
-        
+
         Args:
             other_image: The image to compare to the original.
-            
+
         Returns:
             A float between 0 and 1 representing how different the other image is
                 from the original.
@@ -104,7 +104,7 @@ class Impressionist:
         stat = ImageStat.Stat(diff)
         diff_ratio = sum(stat.mean) / (len(stat.mean) * 255)
         return diff_ratio
-    
+
     def random_coordinates(self) -> CoordList:
         """Generates a list of random coordinates for the shape to be drawn at.
         The number of coordinates depends on the shape type.
@@ -112,27 +112,27 @@ class Impressionist:
         Returns:
             A list of random coordinates for the shape to be drawn at.
         """
-        
-        num_coordinates = 4 # For an ellipse of a line.
+
+        num_coordinates = 4  # For an ellipse of a line.
         if self.shape_type == ShapeType.TRIANGLE:
             num_coordinates = 6
         elif self.shape_type == ShapeType.QUADRILATERAL:
             num_coordinates = 8
         coordinates = []
         for d in range(num_coordinates):
-            if d % 2 == 0: # x-coordinates.
+            if d % 2 == 0:  # x-coordinates.
                 coordinates.append(random.randint(0, self.original.width))
-            else: # y-coordinates.
+            else:  # y-coordinates.
                 coordinates.append(random.randint(0, self.original.height))
         return coordinates
-    
+
     @staticmethod
     def bounding_box(coordinates: CoordList) -> tuple[int, int, int, int]:
         """Returns the bounding box of the shape defined by the coordinates.
-        
+
         Args:
             coordinates: A list of coordinates defining the shape.
-            
+
         Returns:
             A tuple of four integers representing the bounding box (x1, y1, x2, y2).
         """
@@ -144,3 +144,53 @@ class Impressionist:
         x2 = max(xcoords)
         y2 = max(ycoords)
         return x1, y1, x2, y2
+
+    def trial(self):
+        """Performs a single trial of the algorithm, which involves generating a random shape, determining its color, and checking if it improves the similarity to the original image."""
+
+        while True:
+            coordinates = self.random_coordinates()
+            region = self.original.crop(self.bounding_box(coordinates))
+            if region.width > 0 and region.height > 0:
+                break
+
+        if self.method == ColorMethod.AVERAGE:
+            color = tuple((round(n) for n in ImageStat.Stat(region).mean))
+        elif self.method == ColorMethod.COMMON:
+            color = get_most_common_color(region)
+        else:  # Must be a random color.
+            color = tuple(random.choices(range(256), k=3))
+        original = self.glass
+
+        def experiment() -> bool:
+            """Draw the shape on a copy of the current image, and check if it improves the similarity to the original image. If it does, update the current image and best difference.
+
+            Returns:
+                True if the shape improves the similarity, False otherwise.
+            """
+
+            new_image = original.copy()
+            glass_draw = ImageDraw.Draw(new_image)
+            if self.shape_type == ShapeType.ELLIPSE:
+                glass_draw.ellipse(self.bounding_box(coordinates), fill=color)
+            else:  # Must be a triangle, quadrilateral or line.
+                glass_draw.polygon(coordinates, fill=color)
+
+            new_difference = self.difference(new_image)
+            if new_difference < self.best_difference:
+                self.best_difference = new_difference
+                self.glass = new_image
+                return True
+            return False
+
+        if experiment():
+            # Try expanding on every direction, and keep going in better directions.
+            for index in range(len(coordinates)):
+                for amount in (-1, 1):
+                    while True:
+                        old_coordinates = coordinates.copy()
+                        coordinates[index] = coordinates[index] + amount
+                        if not experiment():
+                            coordinates = old_coordinates
+                            break
+            self.shapes.append((coordinates, color))
