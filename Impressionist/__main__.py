@@ -47,7 +47,11 @@ if __name__ == "__main__":
         "--animate",
         type=int,
         default=0,
-        help="If greater than 0, it will create an animated GIF with the number of milliseconds per frame provided.",
+        help=(
+            "If greater than 0, it will create an animated GIF with the number"
+            " of milliseconds per frame provided. WARNING: High resolutions + "
+            "animations may consume significant memory."
+        ),
     )
     arguments = argument_parser.parse_args()
     method = ColorMethod[arguments.method.upper()]

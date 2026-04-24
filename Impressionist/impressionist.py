@@ -60,7 +60,7 @@ class Impressionist:
 
         self.method = method
         self.shape_type = shape_type
-        self.shapes = []
+        self.shapes: list[tuple[CoordList, tuple[int, int, int]]] = []
         # Open the image file and store it in instance variable, then execute algorithm.
         with open(file_name, "rb") as fp:
             self.original = Image.open(fp).convert("RGB")
@@ -87,6 +87,7 @@ class Impressionist:
             end = timer()
             print(f"{end - start} seconds elapsed. {len(self.shapes)} shapes created.")
             self.create_output(output_file, length, vector, animation_length)
+            print("ALL DONE.")
 
     def difference(self, other_image: Image.Image) -> float:
         """Returns a ratio of how different the other image is from the original image.
@@ -146,7 +147,10 @@ class Impressionist:
         return x1, y1, x2, y2
 
     def trial(self):
-        """Performs a single trial of the algorithm, which involves generating a random shape, determining its color, and checking if it improves the similarity to the original image."""
+        """Performs a single trial of the algorithm, which involves generating a random
+        shape, determining its color, and checking if it improves the similarity to the
+        original image.
+        """
 
         while True:
             coordinates = self.random_coordinates()
@@ -163,7 +167,9 @@ class Impressionist:
         original = self.glass
 
         def experiment() -> bool:
-            """Draw the shape on a copy of the current image, and check if it improves the similarity to the original image. If it does, update the current image and best difference.
+            """Draw the shape on a copy of the current image, and check if it improves the
+            similarity to the original image. If it does, update the current image and
+            best difference.
 
             Returns:
                 True if the shape improves the similarity, False otherwise.
@@ -194,3 +200,71 @@ class Impressionist:
                             coordinates = old_coordinates
                             break
             self.shapes.append((coordinates, color))
+
+    def create_output(
+        self, out_file: str, height: int, vector: bool, animation_length: int
+    ):
+        """Creates the output image (and SVG if vector is True) by drawing all the shapes
+        on a blank canvas with the average color as the background.
+
+        Args:
+            out_file: The path to the output image file.
+            height: The height of the final image in pixels.
+            vector: Whether to create vector output (SVG).
+            animation_length: If greater than 0, creates an animated GIF with the number of
+                milliseconds per frame provided.
+        """
+
+        average_color = tuple((round(n) for n in ImageStat.Stat(self.original).mean))
+        original_width, original_height = self.original.size
+        ratio = height / original_height
+        output_size = (int(original_width * ratio), int(original_height * ratio))
+        output_image = Image.new("RGB", output_size, average_color)
+        output_draw = ImageDraw.Draw(output_image)
+        svg = SVG(*output_size, background_color=average_color) if vector else None
+        animation_frames: list[Image.Image] | None = (
+            [] if animation_length > 0 else None
+        )
+
+        # Calculate frame sampling to avoid excessive memory use.
+        frame_sample_rate = 1
+        if animation_frames is not None and len(self.shapes) > 100:
+            # Limit to ~100 frames maximum to prevent memory exhaustion.
+            frame_sample_rate = max(1, len(self.shapes) // 100)
+            print(
+                f"Sampling every {frame_sample_rate} frame(s) for animation to manage memory."
+            )
+
+        for shape_index, (coordinate_list, color) in enumerate(self.shapes):
+            # Scale each coordinate to the correct size.
+            coordinates = [int(x * ratio) for x in coordinate_list]
+            if self.shape_type == ShapeType.ELLIPSE:
+                output_draw.ellipse(self.bounding_box(coordinates), fill=color)
+                if svg:
+                    svg.draw_ellipse(*coordinates, color=color)
+            else:  # The shape must be a triangle, quadrilateral or line.
+                output_draw.polygon(coordinates, fill=color)
+                if svg:
+                    if self.shape_type == ShapeType.LINE:
+                        svg.draw_line(*coordinates, color=color)
+                    else:
+                        svg.draw_polygon(coordinates, color)
+            if animation_frames is not None and shape_index % frame_sample_rate == 0:
+                animation_frames.append(output_image.copy())
+
+        output_image.save(out_file)
+        if svg:
+            svg.write(out_file + ".svg")
+        if animation_frames is not None and len(animation_frames) > 0:
+            print(f"Creating animated GIF with {len(animation_frames)} frames.")
+            animation_frames[0].save(
+                out_file + ".gif",
+                format="GIF",
+                save_all=True,
+                append_images=animation_frames[1:] if len(animation_frames) > 1 else [],
+                optimize=False,
+                duration=animation_length,
+                loop=0,
+                transparency=0,
+                disposal=2,
+            )
