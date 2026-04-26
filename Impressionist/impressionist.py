@@ -69,7 +69,7 @@ class Impressionist:
             aspect_ratio = width / height
             new_size = (int(MAX_HEIGHT * aspect_ratio), MAX_HEIGHT)
             self.original.thumbnail(new_size, Image.Resampling.LANCZOS)
-            # Start the generated image with a background that is the average of all
+            # Start the generated image with a background that is the average of all of
             # the original's pixels in color.
             average_color = tuple(round(n) for n in ImageStat.Stat(self.original).mean)
             self.glass = Image.new("RGB", new_size, average_color)
@@ -114,7 +114,7 @@ class Impressionist:
             A list of random coordinates for the shape to be drawn at.
         """
 
-        num_coordinates = 4  # For an ellipse of a line.
+        num_coordinates = 4  # For an ellipse or a line.
         if self.shape_type == ShapeType.TRIANGLE:
             num_coordinates = 6
         elif self.shape_type == ShapeType.QUADRILATERAL:
