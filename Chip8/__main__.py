@@ -1,5 +1,6 @@
 import os
 import sys
+from argparse import ArgumentParser
 from timeit import default_timer as timer
 
 import pygame
@@ -14,6 +15,12 @@ from Chip8.vm import (  # type: ignore
 
 
 def run(program_data: bytes, name: str):
+    """Run the virtual machine with the given program data and name.
+
+    Args:
+        program_data (bytes): The program data to run.
+        name (str): The name of the program file.
+    """
     # Start Pygame, create the window, and load the sound.
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SCALED)
@@ -67,3 +74,13 @@ def run(program_data: bytes, name: str):
             difference = FRAME_TIME_EXPECTED - frame_time
             pygame.time.delay(int(difference * 1000))
             timer_accumulator += difference
+
+
+if __name__ == "__main__":
+    # Parse the file argument.
+    file_parser = ArgumentParser("Chip8")
+    file_parser.add_argument("rom_file", help="A file containing a CHIP-8 game.")
+    arguments = file_parser.parse_args()
+    with open(arguments.rom_file, "rb") as fp:
+        file_data = fp.read()
+        run(file_data, arguments.rom_file)
