@@ -5,5 +5,7 @@ description = "Small projects to learn computer science concepts using Python."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "numpy>=2.5.1",
     "pillow>=12.2.0",
+    "pygame>=2.6.1",
 ]
