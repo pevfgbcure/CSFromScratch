@@ -4,14 +4,15 @@ from argparse import ArgumentParser
 from timeit import default_timer as timer
 
 import pygame
-from Chip8.vm import (  # type: ignore
+
+from Chip8.constants import (
     ALLOWED_KEYS,
     FRAME_TIME_EXPECTED,
     SCREEN_HEIGHT,
     SCREEN_WIDTH,
     TIMER_DELAY,
-    VM,
 )
+from Chip8.vm import VM
 
 
 def run(program_data: bytes, name: str):
