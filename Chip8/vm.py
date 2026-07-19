@@ -51,3 +51,15 @@ class VM:
         self.sound_timer = 0
         # These hold the status of physical keys being pressed down on the keyboard.
         self.keys = [False] * 16  # CHIP-8 has 16 keys
+
+    def decrement_timers(self):
+        """Decrement the delay and sound timers if they are greater than 0."""
+        if self.delay_timer > 0:
+            self.delay_timer -= 1
+        if self.sound_timer > 0:
+            self.sound_timer -= 1
+
+    @property
+    def play_sound(self) -> bool:
+        """Return True if the sound timer is greater than 0, indicating that a sound should be played."""
+        return self.sound_timer > 0
