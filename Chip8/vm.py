@@ -2,7 +2,15 @@ from array import array
 
 import numpy as np
 
-from Chip8.constants import FONT_SET, RAM_SIZE, SCREEN_HEIGHT, SCREEN_WIDTH
+from Chip8.constants import (
+    BLACK,
+    FONT_SET,
+    RAM_SIZE,
+    SCREEN_HEIGHT,
+    SCREEN_WIDTH,
+    SPRITE_WIDTH,
+    WHITE,
+)
 
 
 def concat_nibbles(*args: int) -> int:
@@ -63,3 +71,30 @@ class VM:
     def play_sound(self) -> bool:
         """Return True if the sound timer is greater than 0, indicating that a sound should be played."""
         return self.sound_timer > 0
+
+    def draw_sprite(self, x: int, y: int, height: int):
+        """Draw a sprite at the given (x, y) coordinates with the specified height.
+        The sprite data is read from memory starting at the address in the index register (self.i).
+
+        Args:
+            x (int): The x-coordinate where the sprite will be drawn.
+            y (int): The y-coordinate where the sprite will be drawn.
+            height (int): The height of the sprite in pixels (number of rows).
+        """
+        flipped_black = False  # did drawing this flip any pixels?
+        for row in range(0, height):
+            row_bits = self.ram[self.i + row]
+            for col in range(0, SPRITE_WIDTH):
+                px = x + col
+                py = y + row
+                if px >= SCREEN_WIDTH or py >= SCREEN_HEIGHT:
+                    continue  # ignore off-screen pixels
+                new_bit = (row_bits >> (7 - col)) & 1
+                old_bit = self.display_buffer[px, py] & 1
+                if new_bit & old_bit:  # if both set, flip white to black
+                    flipped_black = True
+                # CHIP-8 draws by XORing.
+                new_pixel = new_bit ^ old_bit
+                self.display_buffer[px, py] = WHITE if new_pixel else BLACK
+        # Set flipped flag for collision detection.
+        self.v[0xF] = 1 if flipped_black else 0
