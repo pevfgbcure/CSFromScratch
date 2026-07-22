@@ -98,3 +98,17 @@ class VM:
                 self.display_buffer[px, py] = WHITE if new_pixel else BLACK
         # Set flipped flag for collision detection.
         self.v[0xF] = 1 if flipped_black else 0
+
+    def step(self):
+        """Execute a single instruction cycle of the virtual machine."""
+        # We look at the opcode in terms of its nibbles (4 bit pieces).
+        # Opcode is 16 bits made up of the next two bytes in memory at the program counter.
+        first_byte = self.ram[self.pc]
+        last_byte = self.ram[self.pc + 1]
+        nibble1 = (first_byte & 0xF0) >> 4
+        nibble2 = first_byte & 0xF
+        nibble3 = (last_byte & 0xF0) >> 4
+        nibble4 = last_byte & 0xF
+
+        self.needs_redraw = False  # keep track of whether we need to redraw the screen after this instruction.
+        jumped = False  # did we modify program counter in this instruction?
