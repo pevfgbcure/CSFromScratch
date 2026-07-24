@@ -112,3 +112,29 @@ class VM:
 
         self.needs_redraw = False  # keep track of whether we need to redraw the screen after this instruction.
         jumped = False  # did we modify program counter in this instruction?
+
+        match (nibble1, nibble2, nibble3, nibble4):
+            case (0x0, 0x0, 0xE, 0x0):  # 0x00E0: Clear the display.
+                self.display_buffer.fill(BLACK)
+                self.needs_redraw = True
+            case (0x0, 0x0, 0xE, 0xE):  # 0x00EE: Return from a subroutine.
+                self.pc = self.stack.pop()
+                jumped = True
+            case (0x0, n1, n2, n3):  # 0x0nnn: Call program at nnn.
+                self.pc = concat_nibbles(n1, n2, n3)  # Go to start.
+                # Clear registers.
+                self.delay_timer = 0
+                self.sound_timer = 0
+                self.v = array("B", [0] * 16)
+                self.i = 0
+                # Clear screen.
+                self.display_buffer.fill(BLACK)
+                self.needs_redraw = True
+                jumped = True
+            case (0x1, n1, n2, n3):  # 0x1nnn: Jump to address nnn.
+                self.pc = concat_nibbles(n1, n2, n3)
+                jumped = True
+            case (0x2, n1, n2, n3):  # 0x2nnn: Call subroutine at nnn.
+                self.stack.append(self.pc + 2)  # push current pc to stack
+                self.pc = concat_nibbles(n1, n2, n3)  # go to subroutine
+                jumped = True
