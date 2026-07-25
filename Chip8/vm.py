@@ -135,6 +135,20 @@ class VM:
                 self.pc = concat_nibbles(n1, n2, n3)
                 jumped = True
             case (0x2, n1, n2, n3):  # 0x2nnn: Call subroutine at nnn.
-                self.stack.append(self.pc + 2)  # push current pc to stack
+                self.stack.append(
+                    self.pc + 2
+                )  # put return address on stack (next instruction)
                 self.pc = concat_nibbles(n1, n2, n3)  # go to subroutine
                 jumped = True
+            case (0x3, x, _, _):  # 0x3xnn: Skip next instruction if V[x] == nn.
+                if self.v[x] == last_byte:
+                    self.pc += 4
+                    jumped = True
+            case (0x4, x, _, _):  # 0x4xnn: Skip next instruction if V[x] != nn.
+                if self.v[x] != last_byte:
+                    self.pc += 4
+                    jumped = True
+            case (0x5, x, y, _):  # 0x5xy0: Skip next instruction if V[x] == V[y].
+                if self.v[x] == self.v[y]:
+                    self.pc += 4
+                    jumped = True
