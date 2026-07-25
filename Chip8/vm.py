@@ -152,3 +152,36 @@ class VM:
                 if self.v[x] == self.v[y]:
                     self.pc += 4
                     jumped = True
+            case (0x6, x, _, _):  # 0x6xnn: Set V[x] = nn.
+                self.v[x] = last_byte
+            case (0x7, x, _, _):  # 0x7xnn: Add nn to V[x] (carry flag is not changed).
+                self.v[x] = (self.v[x] + last_byte) & 0xFF  # wrap around to 8 bits
+            case (0x8, x, y, 0x0):  # 0x8xy0: Set V[x] = V[y].
+                self.v[x] = self.v[y]
+            case (0x8, x, y, 0x1):  # 0x8xy1: Set V[x] = V[x] | V[y] (bitwise OR).
+                self.v[x] |= self.v[y]
+            case (0x8, x, y, 0x2):  # 0x8xy2: Set V[x] = V[x] & V[y] (bitwise AND).
+                self.v[x] &= self.v[y]
+            case (0x8, x, y, 0x3):  # 0x8xy3: Set V[x] = V[x] ^ V[y] (bitwise XOR).
+                self.v[x] ^= self.v[y]
+            case (0x8, x, y, 0x4):
+                # 0x8xy4: Add V[y] to V[x], and set carry flag in V[0xF] if there's an overflow.
+                sum_ = self.v[x] + self.v[y]
+                self.v[0xF] = 1 if sum_ > 0xFF else 0
+                self.v[x] = sum_ & 0xFF  # wrap around to 8 bits
+            case (0x8, x, y, 0x5):
+                # 0x8xy5: Subtract V[y] from V[x], and set borrow flag in V[0xF] if there's no borrow.
+                self.v[0xF] = 1 if self.v[x] > self.v[y] else 0
+                self.v[x] = (self.v[x] - self.v[y]) & 0xFF  # wrap around to 8 bits
+            case (0x8, x, _, 0x6):
+                # 0x8x_6: Shift V[x] right by 1 bit. Set V[0xF] to the least significant bit before the shift.
+                self.v[0xF] = self.v[x] & 0x1
+                self.v[x] >>= 1
+            case (0x8, x, y, 0x7):
+                # 0x8xy7: Set V[x] = V[y] - V[x], and set borrow flag in V[0xF] if there's no borrow.
+                self.v[0xF] = 1 if self.v[y] > self.v[x] else 0
+                self.v[x] = (self.v[y] - self.v[x]) & 0xFF  # wrap around to 8 bits
+            case (0x8, x, _, 0xE):
+                # 0x8x_E: Shift V[x] left by 1 bit. Set V[0xF] to the most significant bit before the shift.
+                self.v[0xF] = (self.v[x] & 0x80) >> 7
+                self.v[x] = (self.v[x] << 1) & 0xFF  # wrap around to 8 bits
