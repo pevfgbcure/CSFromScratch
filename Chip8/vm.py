@@ -1,4 +1,5 @@
 from array import array
+from random import randint
 
 import numpy as np
 
@@ -185,3 +186,18 @@ class VM:
                 # 0x8x_E: Shift V[x] left by 1 bit. Set V[0xF] to the most significant bit before the shift.
                 self.v[0xF] = (self.v[x] & 0x80) >> 7
                 self.v[x] = (self.v[x] << 1) & 0xFF  # wrap around to 8 bits
+            case (0x9, x, y, 0x0):  # 0x9xy0: Skip next instruction if V[x] != V[y].
+                if self.v[x] != self.v[y]:
+                    self.pc += 4
+                    jumped = True
+            case (0xA, n1, n2, n3):  # 0xAnnn: Set Index Register = nnn.
+                self.i = concat_nibbles(n1, n2, n3)
+            case (0xB, n1, n2, n3):  # 0xBnnn: Jump to address nnn + V[0].
+                self.pc = concat_nibbles(n1, n2, n3) + self.v[0]
+                jumped = True
+            case (0xC, x, _, _):  # 0xCxnn: Set V[x] = random byte AND nn.
+                random_byte = randint(0, 255)
+                self.v[x] = random_byte & last_byte
+            case (0xD, x, y, n):  # 0xDxyn: Draw sprite at (V[x], V[y]) with height n.
+                self.draw_sprite(self.v[x], self.v[y], n)
+                self.needs_redraw = True
