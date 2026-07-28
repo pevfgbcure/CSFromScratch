@@ -1,9 +1,12 @@
+import sys
 from array import array
 from random import randint
 
 import numpy as np
+import pygame
 
 from Chip8.constants import (
+    ALLOWED_KEYS,
     BLACK,
     FONT_SET,
     RAM_SIZE,
@@ -201,3 +204,30 @@ class VM:
             case (0xD, x, y, n):  # 0xDxyn: Draw sprite at (V[x], V[y]) with height n.
                 self.draw_sprite(self.v[x], self.v[y], n)
                 self.needs_redraw = True
+            case (0xE, x, 0x9, 0xE):
+                # 0xEx9E: Skip next instruction if key with the value of V[x] is pressed.
+                if self.keys[self.v[x]]:
+                    self.pc += 4
+                    jumped = True
+            case (0xE, x, 0xA, 0x1):
+                # 0xExA1: Skip next instruction if key with the value of V[x] is not pressed.
+                if not self.keys[self.v[x]]:
+                    self.pc += 4
+                    jumped = True
+            case (0xF, x, 0x0, 0x7):  # 0xFx07: Set V[x] = delay timer value.
+                self.v[x] = self.delay_timer
+            case (0xF, x, 0x0, 0xA):
+                # 0xFx0A: Wait until the next key press, then store the key in V[x].
+                while True:
+                    event = pygame.event.wait()
+                    if event.type == pygame.KEYDOWN:
+                        key_name = pygame.key.name(event.key)
+                        if key_name in ALLOWED_KEYS:
+                            self.v[x] = ALLOWED_KEYS.index(key_name)
+                            break
+                    if event.type == pygame.QUIT:
+                        sys.exit()
+            case (0xF, x, 0x1, 0x5):  # 0xFx15: Set delay timer = V[x].
+                self.delay_timer = self.v[x]
+            case (0xF, x, 0x1, 0x8):  # 0xFx18: Set sound timer = V[x].
+                self.sound_timer = self.v[x]
