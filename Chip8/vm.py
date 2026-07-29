@@ -231,3 +231,29 @@ class VM:
                 self.delay_timer = self.v[x]
             case (0xF, x, 0x1, 0x8):  # 0xFx18: Set sound timer = V[x].
                 self.sound_timer = self.v[x]
+            case (0xF, x, 0x1, 0xE):  # 0xFx1E: Add V[x] to i.
+                self.i += self.v[x]
+            case (0xF, x, 0x2, 0x9):
+                # 0xFx29: Set i to the location of character V[x] in the font set.
+                self.i = self.v[x] * 5  # Each character is 5 bytes long.
+            case (0xF, x, 0x3, 0x3):
+                # 0xFx33: Store the binary-coded decimal representation of V[x] at addresses i, i+1, and i+2.
+                value = self.v[x]
+                self.ram[self.i] = value // 100  # Hundreds place
+                self.ram[self.i + 1] = (value // 10) % 10  # Tens place
+                self.ram[self.i + 2] = value % 10  # Ones place
+            case (0xF, x, 0x5, 0x5):
+                # 0xFx55: Store registers V[0] through V[x] in memory starting at address i.
+                for idx in range(x + 1):
+                    self.ram[self.i + idx] = self.v[idx]
+            case (0xF, x, 0x6, 0x5):
+                # 0xFx65: Read registers V[0] through V[x] from memory starting at address i.
+                for idx in range(x + 1):
+                    self.v[idx] = self.ram[self.i + idx]
+            case _:  # Unrecognized opcode.
+                print(
+                    f"Unrecognized opcode: {nibble1:X}{nibble2:X}{nibble3:X}{nibble4:X}"
+                )
+
+        if not jumped:
+            self.pc += 2  # Move to the next instruction (each instruction is 2 bytes).
