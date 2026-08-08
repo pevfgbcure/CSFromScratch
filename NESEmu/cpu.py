@@ -68,3 +68,46 @@ RESET_VECTOR = 0xFFFC
 NMI_VECTOR = 0xFFFA
 IRQ_BRK_VECTOR = 0xFFFE
 MEM_SIZE = 2048
+
+
+class CPU:
+    """Represents the 6502 CPU."""
+
+    def __init__(self, ppu: PPU, rom: ROM):
+        """Initializes the CPU with a reference to the PPU and ROM.
+
+        Args:
+            ppu (PPU): The PPU instance.
+            rom (ROM): The ROM instance.
+        """
+
+        # Connections to other parts of the console.
+        self.ppu: PPU = ppu
+        self.rom: ROM = rom
+        # Memory on the CPU.
+        self.ram = array("B", [0] * MEM_SIZE)
+        # Registers.
+        self.A: int = 0
+        self.X: int = 0
+        self.Y: int = 0
+        self.SP: int = STACK_POINTER_RESET
+        self.PC: int = self.read_memory(RESET_VECTOR, MemMode.ABSOLUTE) | (
+            self.read_memory(RESET_VECTOR + 1, MemMode.ABSOLUTE) << 8
+        )
+
+        # Flags.
+        self.C: bool = False  # Carry
+        self.Z: bool = False  # Zero
+        self.I: bool = True  # Interrupt disable
+        self.D: bool = False  # Decimal mode
+        self.B: bool = False  # Break command
+        self.V: bool = False  # Overflow
+        self.N: bool = False  # Negative
+        # Miscellaneous state.
+        self.jumped: bool = False
+        self.page_crossed: bool = False
+        self.cpu_ticks: int = 0
+        self.stall: int = 0  # Number of cycles to stall
+        self.joypad1 = Joypad()
+
+    def read_memory(self, location: int, mode: MemMode) -> int: ...
