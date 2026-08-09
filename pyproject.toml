@@ -9,3 +9,7 @@ dependencies = [
     "pillow>=12.2.0",
     "pygame>=2.6.1",
 ]
+
+[tool.ruff]
+# Allow lines to be as long as 120.
+line-length = 120
