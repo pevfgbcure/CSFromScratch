@@ -370,4 +370,59 @@ class CPU:
             Instruction(InstructionType.ISC, self.unimplemented, MemMode.ABSOLUTE_X, 0, 7, 0),
         ]
 
+    def address_for_mode(self, data: int, mode: MemMode) -> int:
+        """
+        Returns the memory address for the given mode and data.
+
+        args:
+            data: The data to use for the address calculation.
+            mode: The mode to use for the address calculation.
+
+        returns:
+            The address for the given mode and data.
+        """
+
+        def different_pages(address1: int, address2: int) -> bool:
+            return (address1 & 0xFF00) != (address2 & 0xFF00)
+
+        address = 0
+        match mode:
+            case MemMode.ABSOLUTE:
+                address = data
+            case MemMode.ABSOLUTE_X:
+                address = (data + self.X) & 0xFFFF
+                self.page_crossed = different_pages(address, address - self.X)
+            case MemMode.ABSOLUTE_Y:
+                address = (data + self.Y) & 0xFFFF
+                self.page_crossed = different_pages(address, address - self.Y)
+            case MemMode.INDEXED_INDIRECT:
+                # 0xFF for zero-page wrapping in next two lines
+                ls = self.ram[(data + self.X) & 0xFF]
+                ms = self.ram[(data + self.X + 1) & 0xFF]
+                address = (ms << 8) | ls
+            case MemMode.INDIRECT:
+                ls = self.ram[data]
+                ms = self.ram[data + 1]
+                if (data & 0xFF) == 0xFF:
+                    ms = self.ram[data & 0xFF00]
+                address = (ms << 8) | ls
+            case MemMode.INDIRECT_INDEXED:
+                # 0xFF for zero-page wrapping in next two lines
+                ls = self.ram[data & 0xFF]
+                ms = self.ram[(data + 1) & 0xFF]
+                address = (ms << 8) | ls
+                address = (address + self.Y) & 0xFFFF
+                self.page_crossed = different_pages(address, address - self.Y)
+            case MemMode.RELATIVE:
+                address = (
+                    (self.PC + 2 + data) & 0xFFFF if (data < 0x80) else (self.PC + 2 + (data - 256)) & 0xFFFF
+                )  # signed
+            case MemMode.ZEROPAGE:
+                address = data
+            case MemMode.ZEROPAGE_X:
+                address = (data + self.X) & 0xFF
+            case MemMode.ZEROPAGE_Y:
+                address = (data + self.Y) & 0xFF
+        return address
+
     def read_memory(self, location: int, mode: MemMode) -> int: ...
