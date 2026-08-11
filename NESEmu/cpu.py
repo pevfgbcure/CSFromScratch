@@ -425,4 +425,50 @@ class CPU:
                 address = (data + self.Y) & 0xFF
         return address
 
-    def read_memory(self, location: int, mode: MemMode) -> int: ...
+    def read_memory(self, location: int, mode: MemMode) -> int:
+        """
+        Reads a byte from memory at the given location and mode.
+
+        args:
+            location: The location to read from.
+            mode: The mode to use for the read.
+
+        returns:
+            The byte read from memory."""
+        if mode == MemMode.IMMEDIATE:
+            return location  # location is actually data in this case
+        address = self.address_for_mode(location, mode)
+
+        # Memory map at https://wiki.nesdev.org/w/index.php/CPU_memory_map
+        if address < 0x2000:  # main RAM 2KB goes up to 0x800
+            return self.ram[address % 0x800]  # mirrors for next 6KB
+        elif address < 0x4000:  # 2000-2007 is PPU, mirrors every 8 bytes
+            temp = (address % 8) | 0x2000  # get data from PPU register
+            return self.ppu.read_register(temp)
+        elif address == 0x4016:  # joypad 1 status
+            if self.joypad1.strobe:
+                return self.joypad1.a
+            self.joypad1.read_count += 1
+            match self.joypad1.read_count:
+                case 1:
+                    return 0x40 | self.joypad1.a
+                case 2:
+                    return 0x40 | self.joypad1.b
+                case 3:
+                    return 0x40 | self.joypad1.select
+                case 4:
+                    return 0x40 | self.joypad1.start
+                case 5:
+                    return 0x40 | self.joypad1.up
+                case 6:
+                    return 0x40 | self.joypad1.down
+                case 7:
+                    return 0x40 | self.joypad1.left
+                case 8:
+                    return 0x40 | self.joypad1.right
+                case _:
+                    return 0x41
+        elif address < 0x6000:
+            return 0  # unimplemented other kinds of IO
+        else:  # addresses from 0x6000 to 0xFFFF are from the cartridge
+            return self.rom.read_cartridge(address)
