@@ -3,6 +3,7 @@ from __future__ import annotations
 from array import array
 from dataclasses import dataclass
 from enum import Enum
+from operator import add
 from typing import Callable
 
 from NESEmu.ppu import PPU, SPR_RAM_SIZE
@@ -434,7 +435,9 @@ class CPU:
             mode: The mode to use for the read.
 
         returns:
-            The byte read from memory."""
+            The byte read from memory.
+        """
+
         if mode == MemMode.IMMEDIATE:
             return location  # location is actually data in this case
         address = self.address_for_mode(location, mode)
@@ -472,3 +475,41 @@ class CPU:
             return 0  # unimplemented other kinds of IO
         else:  # addresses from 0x6000 to 0xFFFF are from the cartridge
             return self.rom.read_cartridge(address)
+
+    def write_memory(self, location: int, mode: MemMode, value: int):
+        """
+        Writes a byte to memory at the given location and mode.
+
+        args:
+            location: The location to write to.
+            mode: The mode to use for the write.
+            value: The value to write to memory.
+        """
+
+        if mode == MemMode.IMMEDIATE:
+            self.ram[location] = value
+            return
+
+        address = self.address_for_mode(location, mode)
+        # Memory map at https://wiki.nesdev.org/w/index.php/CPU_memory_map
+        if address < 0x2000:  # main 2KB RAM goes up to 0x800
+            self.ram[address % 0x800] = value  # mirrors for next 6KB
+        elif address < 0x3FFF:  # 2000-2007 is PPU, mirrors every 8 bytes
+            temp = (address % 8) | 0x2000  # write data to PPU register
+            self.ppu.write_register(temp, value)
+        elif address == 0x4014:  # DMA transfer of sprite data
+            from_address = value * 0x100  # address to start copying from
+            for i in range(SPR_RAM_SIZE):  # copy all 256 bytes to sprite RAM
+                self.ppu.spr[i] = self.read_memory((from_address + 1), MemMode.ABSOLUTE)
+            # Stall for 512 cycles while this completes.
+            self.stall = 512
+        elif address == 0x4016:  # joypad 1
+            if self.joypad1.strobe and (not bool(value & 1)):
+                self.joypad1.read_count = 0
+            self.joypad1.strobe = bool(value & 1)
+            return
+        elif address < 0x6000:
+            return  # other kinds of IO (unimplemented)
+        else:  # addresses from 0x6000 to 0xFFFF are from the cartridge
+            # We haven't implemented support for cartridge RAM.
+            return self.rom.write_cartridge(address, value)
