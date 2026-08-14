@@ -513,3 +513,34 @@ class CPU:
         else:  # addresses from 0x6000 to 0xFFFF are from the cartridge
             # We haven't implemented support for cartridge RAM.
             return self.rom.write_cartridge(address, value)
+
+    def setZN(self, value: int):
+        """
+        Sets the Z and N flags based on the given value.
+
+        args:
+            value: The value to check.
+        """
+
+        self.Z = value == 0
+        self.N = bool(value & 0x80) or (value < 0)
+
+    def stack_push(self, value: int):
+        """
+        Pushes a byte onto the stack.
+
+        args:
+            value: The value to push onto the stack.
+        """
+        self.ram[(0x100 | self.SP)] = value
+        self.SP = (self.SP - 1) & 0xFF
+
+    def stack_pop(self) -> int:
+        """
+        Pops a byte from the stack.
+
+        returns:
+            The value popped from the stack.
+        """
+        self.SP = (self.SP + 1) & 0xFF
+        return self.ram[(0x100 | self.SP)]
