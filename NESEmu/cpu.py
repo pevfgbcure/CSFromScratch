@@ -375,12 +375,12 @@ class CPU:
         """
         Returns the memory address for the given mode and data.
 
-        args:
-            data: The data to use for the address calculation.
-            mode: The mode to use for the address calculation.
+        Args:
+            data (int): The data to use for the address calculation.
+            mode (MemMode): The mode to use for the address calculation.
 
-        returns:
-            The address for the given mode and data.
+        Returns:
+            int: The address for the given mode and data.
         """
 
         def different_pages(address1: int, address2: int) -> bool:
@@ -430,12 +430,12 @@ class CPU:
         """
         Reads a byte from memory at the given location and mode.
 
-        args:
-            location: The location to read from.
-            mode: The mode to use for the read.
+        Args:
+            location (int): The location to read from.
+            mode (MemMode): The mode to use for the read.
 
-        returns:
-            The byte read from memory.
+        Returns:
+            int: The byte read from memory.
         """
 
         if mode == MemMode.IMMEDIATE:
@@ -480,10 +480,10 @@ class CPU:
         """
         Writes a byte to memory at the given location and mode.
 
-        args:
-            location: The location to write to.
-            mode: The mode to use for the write.
-            value: The value to write to memory.
+        Args:
+            location (int): The location to write to.
+            mode (MemMode): The mode to use for the write.
+            value (int): The value to write to memory.
         """
 
         if mode == MemMode.IMMEDIATE:
@@ -518,8 +518,8 @@ class CPU:
         """
         Sets the Z and N flags based on the given value.
 
-        args:
-            value: The value to check.
+        Args:
+            value (int): The value to check.
         """
 
         self.Z = value == 0
@@ -529,8 +529,8 @@ class CPU:
         """
         Pushes a byte onto the stack.
 
-        args:
-            value: The value to push onto the stack.
+        Args:
+            value (int): The value to push onto the stack.
         """
         self.ram[(0x100 | self.SP)] = value
         self.SP = (self.SP - 1) & 0xFF
@@ -539,8 +539,8 @@ class CPU:
         """
         Pops a byte from the stack.
 
-        returns:
-            The value popped from the stack.
+        Returns:
+            int: The value popped from the stack.
         """
         self.SP = (self.SP + 1) & 0xFF
         return self.ram[(0x100 | self.SP)]
