@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from array import array
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, property
 from operator import add
 from typing import Callable
 
@@ -544,3 +544,31 @@ class CPU:
         """
         self.SP = (self.SP + 1) & 0xFF
         return self.ram[(0x100 | self.SP)]
+
+    @property
+    def status(self) -> int:
+        """
+        Gets the status register value as an integer.
+
+        Returns:
+            int: The status register value.
+        """
+
+        return self.C | self.Z << 1 | self.I << 2 | self.D << 3 | self.B << 4 | 1 << 5 | self.V << 6 | self.N << 7
+
+    def set_status(self, temp: int):
+        """
+        Sets the status register flags based on the given integer value.
+
+        Args:
+            temp (int): The integer value representing the status register flags.
+        """
+
+        self.C = bool(temp & 0b00000001)
+        self.Z = bool(temp & 0b00000010)
+        self.I = bool(temp & 0b00000100)
+        self.D = bool(temp & 0b00001000)
+        # https://nesdev.org/the%20'B'%20flag%20&%20BRK%20instruction.txt
+        self.B = False
+        self.V = bool(temp & 0b01000000)
+        self.N = bool(temp & 0b10000000)
