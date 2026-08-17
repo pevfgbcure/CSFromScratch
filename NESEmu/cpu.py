@@ -572,3 +572,39 @@ class CPU:
         self.B = False
         self.V = bool(temp & 0b01000000)
         self.N = bool(temp & 0b10000000)
+
+    def trigger_NMI(self):
+        """
+        Triggers a Non-Maskable Interrupt (NMI) by pushing the current program counter
+        and status register onto the stack, setting the interrupt disable flag, and updating
+        the program counter to the NMI vector address.
+        """
+
+        self.stack_push((self.PC >> 8) & 0xFF)
+        self.stack_push(self.PC & 0xFF)
+        # https://nesdev.org/the%20'B'%20flag%20&%20BRK%20instruction.txt
+        self.B = True
+        self.stack_push(self.status)
+        self.B = False
+        self.I = True
+        # Set PC to NMI vector.
+        self.PC = (self.read_memory(NMI_VECTOR, MemMode.ABSOLUTE)) | (
+            self.read_memory(NMI_VECTOR + 1, MemMode.ABSOLUTE) << 8
+        )
+
+    def log(self) -> str:
+        """
+        Returns a string representation of the current CPU state for logging purposes.
+
+        Returns:
+            str: A string representation of the current CPU state.
+        """
+
+        opcode = self.read_memory(self.PC, MemMode.ABSOLUTE)
+        instruction = self.instructions[opcode]
+        data1 = " " if instruction.length < 2 else f"{self.read_memory(self.PC + 1, MemMode.ABSOLUTE):02X}"
+        data2 = " " if instruction.length < 3 else f"{self.read_memory(self.PC + 2, MemMode.ABSOLUTE):02X}"
+        return (
+            f"{self.PC:04X} {opcode:02X} {data1} {data2} {instruction.type.name}{29 * ' '}"
+            f"A:{self.A:02X} X:{self.X:02X} Y:{self.Y:02X} P:{self.status:02X} SP:{self.SP:02X}"
+        )
