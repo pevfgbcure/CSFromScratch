@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from array import array
+from ctypes import _MemmoveFunctionType
 from dataclasses import dataclass
 from enum import Enum, property
 from operator import add
@@ -371,6 +372,8 @@ class CPU:
             Instruction(InstructionType.ISC, self.unimplemented, MemMode.ABSOLUTE_X, 0, 7, 0),
         ]
 
+    # ------------------------------- HELPER METHODS ----------------------------------
+
     def address_for_mode(self, data: int, mode: MemMode) -> int:
         """
         Returns the memory address for the given mode and data.
@@ -608,3 +611,49 @@ class CPU:
             f"{self.PC:04X} {opcode:02X} {data1} {data2} {instruction.type.name}{29 * ' '}"
             f"A:{self.A:02X} X:{self.X:02X} Y:{self.Y:02X} P:{self.status:02X} SP:{self.SP:02X}"
         )
+
+    # ---------------------------- INSTRUCTIONS -----------------------------------------
+    def ADC(self, instruction: Instruction, data: int):
+        """
+        Add memory to accumulator with carry. Updates the accumulator, carry flag,
+        overflow flag, and zero/negative flags.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data to be added to the accumulator.
+        """
+        src = self.read_memory(data, instruction.mode)
+        signed_result = src + self.A + self.C
+        self.V = bool(~(self.A ^ src) & (self.A ^ signed_result) & 0x80)
+        self.A = (self.A + src + self.C) & 0xFF
+        self.C = signed_result > 0xFF
+        self.setZN(self.A)
+
+    def AND(self, instruction: Instruction, data: int):
+        """
+        Bitwise AND with accumulator. Updates the accumulator and zero/negative flags.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data to be ANDed with the accumulator.
+        """
+        src = self.read_memory(data, instruction.mode)
+        self.A = self.A & src
+        self.setZN(self.A)
+
+    def ASL(self, instruction: Instruction, data: int):
+        """
+        Arithmetic Shift Left. Shifts the bits of the accumulator or memory left by one position.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data to be shifted.
+        """
+        src = self.A if instruction.mode == MemMode.ACCUMULATOR else self.read_memory(data, instruction.mode)
+        self.C = bool(src >> 7)  # carry is set to the 7th bit
+        src = (src << 1) & 0xFF
+        self.setZN(src)
+        if instruction.mode == MemMode.ACCUMULATOR:
+            self.A = src
+        else:
+            self.write_memory(data, instruction.mode, src)
