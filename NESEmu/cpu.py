@@ -660,7 +660,8 @@ class CPU:
 
     def BCC(self, instruction: Instruction, data: int):
         """
-        Branch if Carry Clear. If the carry flag is clear, updates the program counter to the target address calculated from the instruction's mode and data.
+        Branch if Carry Clear. If the carry flag is clear, updates the program counter
+        to the target address calculated from the instruction's mode and data.
 
         Args:
             instruction (Instruction): The instruction being executed.
@@ -673,7 +674,8 @@ class CPU:
 
     def BCS(self, instruction: Instruction, data: int):
         """
-        Branch if Carry Set. If the carry flag is set, updates the program counter to the target address calculated from the instruction's mode and data.
+        Branch if Carry Set. If the carry flag is set, updates the program counter to the
+        target address calculated from the instruction's mode and data.
 
         Args:
             instruction (Instruction): The instruction being executed.
@@ -686,7 +688,8 @@ class CPU:
 
     def BEQ(self, instruction: Instruction, data: int):
         """
-        Branch on result zero. If the zero flag is set, updates the program counter to the target address calculated from the instruction's mode and data.
+        Branch on result zero. If the zero flag is set, updates the program counter to
+        the target address calculated from the instruction's mode and data.
 
         Args:
             instruction (Instruction): The instruction being executed.
@@ -699,7 +702,9 @@ class CPU:
 
     def BIT(self, instruction: Instruction, data: int):
         """
-        Test bits in memory with accumulator. Updates the overflow and negative flags based on the value read from memory, and sets the zero flag based on the result of a bitwise AND between the accumulator and the value read from memory.
+        Test bits in memory with accumulator. Updates the overflow and negative flags based
+        on the value read from memory, and sets the zero flag based on the result of a
+        bitwise AND between the accumulator and the value read from memory.
 
         Args:
             instruction (Instruction): The instruction being executed.
