@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 from array import array
-from ctypes import _MemmoveFunctionType
 from dataclasses import dataclass
-from enum import Enum, property
-from operator import add
+from enum import Enum
 from typing import Callable
 
 from NESEmu.ppu import PPU, SPR_RAM_SIZE
