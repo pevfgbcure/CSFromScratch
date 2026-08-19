@@ -710,3 +710,45 @@ class CPU:
         self.V = bool((src >> 6) & 1)
         self.Z = (src & self.A) == 0
         self.N = (src >> 7) == 1
+
+    def BMI(self, instruction: Instruction, data: int):
+        """
+        Branch if Minus. If the negative flag is set, updates the program counter to the target
+        address calculated from the instruction's mode and data.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to calculate the target address.
+        """
+
+        if self.N:
+            self.PC = self.address_for_mode(data, instruction.mode)
+            self.jumped = True
+
+    def BNE(self, instruction: Instruction, data: int):
+        """
+        Branch on result not zero. If the zero flag is clear, updates the program counter to the
+        target address calculated from the instruction's mode and data.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to calculate the target address.
+        """
+
+        if not self.Z:
+            self.PC = self.address_for_mode(data, instruction.mode)
+            self.jumped = True
+
+    def BPL(self, instruction: Instruction, data: int):
+        """
+        Branch if Positive. If the negative flag is clear, updates the program counter to the
+        target address calculated from the instruction's mode and data.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to calculate the target address.
+        """
+
+        if not self.N:
+            self.PC = self.address_for_mode(data, instruction.mode)
+            self.jumped = True
