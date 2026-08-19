@@ -657,3 +657,56 @@ class CPU:
             self.A = src
         else:
             self.write_memory(data, instruction.mode, src)
+
+    def BCC(self, instruction: Instruction, data: int):
+        """
+        Branch if Carry Clear. If the carry flag is clear, updates the program counter to the target address calculated from the instruction's mode and data.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to calculate the target address.
+        """
+
+        if not self.C:
+            self.PC = self.address_for_mode(data, instruction.mode)
+            self.jumped = True
+
+    def BCS(self, instruction: Instruction, data: int):
+        """
+        Branch if Carry Set. If the carry flag is set, updates the program counter to the target address calculated from the instruction's mode and data.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to calculate the target address.
+        """
+
+        if self.C:
+            self.PC = self.address_for_mode(data, instruction.mode)
+            self.jumped = True
+
+    def BEQ(self, instruction: Instruction, data: int):
+        """
+        Branch on result zero. If the zero flag is set, updates the program counter to the target address calculated from the instruction's mode and data.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to calculate the target address.
+        """
+
+        if self.Z:
+            self.PC = self.address_for_mode(data, instruction.mode)
+            self.jumped = True
+
+    def BIT(self, instruction: Instruction, data: int):
+        """
+        Test bits in memory with accumulator. Updates the overflow and negative flags based on the value read from memory, and sets the zero flag based on the result of a bitwise AND between the accumulator and the value read from memory.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to read from memory.
+        """
+
+        src = self.read_memory(data, instruction.mode)
+        self.V = bool((src >> 6) & 1)
+        self.Z = (src & self.A) == 0
+        self.N = (src >> 7) == 1
