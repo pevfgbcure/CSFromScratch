@@ -757,3 +757,52 @@ class CPU:
         if not self.N:
             self.PC = self.address_for_mode(data, instruction.mode)
             self.jumped = True
+
+    def BRK(self, *_):
+        """
+        Force break. Pushes the program counter and status register onto the stack, sets the
+        interrupt disable flag, and updates the program counter to the IRQ/BRK vector address.
+        """
+
+        self.PC += 2
+        # Push PC to stack
+        self.stack_push((self.PC >> 8) & 0xFF)
+        self.stack_push(self.PC & 0xFF)
+        # Push status to stack
+        self.B = True
+        self.stack_push(self.status)
+        self.B = False
+        self.I = True
+        # Set PC to reset vector
+        self.PC = (self.read_memory(IRQ_BRK_VECTOR, MemMode.ABSOLUTE)) | (
+            self.read_memory(IRQ_BRK_VECTOR + 1, MemMode.ABSOLUTE) << 8
+        )
+        self.jumped = True
+
+    def BVC(self, instruction: Instruction, data: int):
+        """
+        Branch if Overflow Clear. If the overflow flag is clear, updates the program counter to the
+        target address calculated from the instruction's mode and data.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to calculate the target address.
+        """
+
+        if not self.V:
+            self.PC = self.address_for_mode(data, instruction.mode)
+            self.jumped = True
+
+    def BVS(self, instruction: Instruction, data: int):
+        """
+        Branch if Overflow Set. If the overflow flag is set, updates the program counter to the
+        target address calculated from the instruction's mode and data.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to calculate the target address.
+        """
+
+        if self.V:
+            self.PC = self.address_for_mode(data, instruction.mode)
+            self.jumped = True
