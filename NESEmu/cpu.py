@@ -804,3 +804,27 @@ class CPU:
         if self.V:
             self.PC = self.address_for_mode(data, instruction.mode)
             self.jumped = True
+
+    def CLC(self, *_):
+        """
+        Clear Carry Flag. Sets the carry flag to 0.
+        """
+        self.C = False
+
+    def CLD(self, *_):
+        """
+        Clear Decimal Mode. Sets the decimal mode flag to 0.
+        """
+        self.D = False
+
+    def CLI(self, *_):
+        """
+        Clear Interrupt Disable. Sets the interrupt disable flag to 0.
+        """
+        self.I = False
+
+    def CLV(self, *_):
+        """
+        Clear Overflow Flag. Sets the overflow flag to 0.
+        """
+        self.V = False
