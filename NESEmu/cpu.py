@@ -828,3 +828,42 @@ class CPU:
         Clear Overflow Flag. Sets the overflow flag to 0.
         """
         self.V = False
+
+    def CMP(self, instruction: Instruction, data: int):
+        """
+        Compare accumulator with memory. Updates the carry flag, zero flag, and negative flag
+        based on the result of the comparison.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to read from memory for comparison.
+        """
+        src = self.read_memory(data, instruction.mode)
+        self.C = self.A >= src
+        self.setZN(self.A - src)
+
+    def CPX(self, instruction: Instruction, data: int):
+        """
+        Compare X register with memory. Updates the carry flag, zero flag, and negative flag
+        based on the result of the comparison.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to read from memory for comparison.
+        """
+        src = self.read_memory(data, instruction.mode)
+        self.C = self.X >= src
+        self.setZN(self.X - src)
+
+    def CPY(self, instruction: Instruction, data: int):
+        """
+        Compare Y register with memory. Updates the carry flag, zero flag, and negative flag
+        based on the result of the comparison.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to read from memory for comparison.
+        """
+        src = self.read_memory(data, instruction.mode)
+        self.C = self.Y >= src
+        self.setZN(self.Y - src)
