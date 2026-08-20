@@ -897,3 +897,45 @@ class CPU:
         """
         self.Y = (self.Y - 1) & 0xFF
         self.setZN(self.Y)
+
+    def EOR(self, instruction: Instruction, data: int):
+        """
+        Exclusive OR with accumulator. Updates the accumulator and sets the zero and negative flags
+        based on the result.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to read from memory for the exclusive OR operation.
+        """
+        self.A ^= self.read_memory(data, instruction.mode)
+        self.setZN(self.A)
+
+    def INC(self, instruction: Instruction, data: int):
+        """
+        Increment memory by one. Updates the value in memory and sets the zero and negative flags
+        based on the result.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to read from and write to memory.
+        """
+        src = self.read_memory(data, instruction.mode)
+        src = (src + 1) & 0xFF
+        self.write_memory(data, instruction.mode, src)
+        self.setZN(src)
+
+    def INX(self, *_):
+        """
+        Increment X register by one. Updates the X register and sets the zero and negative flags
+        based on the result.
+        """
+        self.X = (self.X + 1) & 0xFF
+        self.setZN(self.X)
+
+    def INY(self, *_):
+        """
+        Increment Y register by one. Updates the Y register and sets the zero and negative flags
+        based on the result.
+        """
+        self.Y = (self.Y + 1) & 0xFF
+        self.setZN(self.Y)
