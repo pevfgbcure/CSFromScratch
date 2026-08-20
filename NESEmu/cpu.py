@@ -867,3 +867,33 @@ class CPU:
         src = self.read_memory(data, instruction.mode)
         self.C = self.Y >= src
         self.setZN(self.Y - src)
+
+    def DEC(self, instruction: Instruction, data: int):
+        """
+        Decrement memory by one. Updates the value in memory and sets the zero and negative flags
+        based on the result.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to read from and write to memory.
+        """
+        src = self.read_memory(data, instruction.mode)
+        src = (src - 1) & 0xFF
+        self.write_memory(data, instruction.mode, src)
+        self.setZN(src)
+
+    def DEX(self, *_):
+        """
+        Decrement X register by one. Updates the X register and sets the zero and negative flags
+        based on the result.
+        """
+        self.X = (self.X - 1) & 0xFF
+        self.setZN(self.X)
+
+    def DEY(self, *_):
+        """
+        Decrement Y register by one. Updates the Y register and sets the zero and negative flags
+        based on the result.
+        """
+        self.Y = (self.Y - 1) & 0xFF
+        self.setZN(self.Y)
