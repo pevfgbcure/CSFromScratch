@@ -939,3 +939,32 @@ class CPU:
         """
         self.Y = (self.Y + 1) & 0xFF
         self.setZN(self.Y)
+
+    def JMP(self, instruction: Instruction, data: int):
+        """
+        Jump to new location. Updates the program counter to the target address calculated from
+        the instruction's mode and data.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to calculate the target address.
+        """
+        self.PC = self.address_for_mode(data, instruction.mode)
+        self.jumped = True
+
+    def JSR(self, instruction: Instruction, data: int):
+        """
+        Jump to subroutine. Pushes the current program counter onto the stack and updates the
+        program counter to the target address calculated from the instruction's mode and data.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to calculate the target address.
+        """
+        self.PC += 2
+        # Push PC to stack
+        self.stack_push((self.PC >> 8) & 0xFF)
+        self.stack_push(self.PC & 0xFF)
+        # Jump to subroutine
+        self.PC = self.address_for_mode(data, instruction.mode)
+        self.jumped = True
