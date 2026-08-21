@@ -968,3 +968,39 @@ class CPU:
         # Jump to subroutine
         self.PC = self.address_for_mode(data, instruction.mode)
         self.jumped = True
+
+    def LDA(self, instruction: Instruction, data: int):
+        """
+        Load accumulator with memory. Updates the accumulator and sets the zero and negative flags
+        based on the result.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to read from memory.
+        """
+        self.A = self.read_memory(data, instruction.mode)
+        self.setZN(self.A)
+
+    def LDX(self, instruction: Instruction, data: int):
+        """
+        Load X register with memory. Updates the X register and sets the zero and negative flags
+        based on the result.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to read from memory.
+        """
+        self.X = self.read_memory(data, instruction.mode)
+        self.setZN(self.X)
+
+    def LDY(self, instruction: Instruction, data: int):
+        """
+        Load Y register with memory. Updates the Y register and sets the zero and negative flags
+        based on the result.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to read from memory.
+        """
+        self.Y = self.read_memory(data, instruction.mode)
+        self.setZN(self.Y)
