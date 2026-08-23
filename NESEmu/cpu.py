@@ -1039,3 +1039,26 @@ class CPU:
         """
         self.A |= self.read_memory(data, instruction.mode)
         self.setZN(self.A)
+
+    def PHA(self, *_):
+        """Push accumulator onto stack. Saves the current value of the accumulator onto the stack."""
+        self.stack_push(self.A)
+
+    def PHP(self, *_):
+        """Push status onto stack. Saves the current value of accumulator onto the stack."""
+        # https://nesdev.org/the%20'B'%20flag%20&%20BRK%20instruction.txt
+        self.B = True
+        self.stack_push(self.status)
+        self.B = False
+
+    def PLA(self, *_):
+        """
+        Pull accumulator. Retrieves the value of the accumulator from the stack and sets the
+        zero and negative flags based on the result.
+        """
+        self.A = self.stack_pop()
+        self.setZN(self.A)
+
+    def PLP(self, *_):
+        """Pull status. Retrieves and sets the values of the status flags from the stack."""
+        self.set_status(self.stack_pop())
