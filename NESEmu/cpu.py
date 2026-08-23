@@ -1004,3 +1004,38 @@ class CPU:
         """
         self.Y = self.read_memory(data, instruction.mode)
         self.setZN(self.Y)
+
+    def LSR(self, instruction: Instruction, data: int):
+        """
+        Logical Shift Right. Shifts the bits of the accumulator or memory right by one position.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data to be shifted.
+        """
+        src = self.A if instruction.mode == MemMode.ACCUMULATOR else self.read_memory(data, instruction.mode)
+        self.C = bool(src & 1)  # carry is set to 0th bit
+        src >>= 1
+        self.setZN(src)
+        if instruction.mode == MemMode.ACCUMULATOR:
+            self.A = src
+        else:
+            self.write_memory(data, instruction.mode, src)
+
+    def NOP(self, *_):
+        """
+        No Operation. This instruction does nothing and is used for timing purposes.
+        """
+        pass
+
+    def ORA(self, instruction: Instruction, data: int):
+        """
+        Bitwise OR with accumulator. Updates the accumulator and sets the zero and negative flags
+        based on the result.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data to be ORed with the accumulator.
+        """
+        self.A |= self.read_memory(data, instruction.mode)
+        self.setZN(self.A)
