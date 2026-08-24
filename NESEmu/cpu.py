@@ -1062,3 +1062,65 @@ class CPU:
     def PLP(self, *_):
         """Pull status. Retrieves and sets the values of the status flags from the stack."""
         self.set_status(self.stack_pop())
+
+    def ROL(self, instruction: Instruction, data: int):
+        """
+        Rotate Left. Shifts all bits of the accumulator or memory left by one position, moving bit 7
+        into the carry flag and the old carry flag into bit 0.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data or address to be rotated.
+        """
+        src = self.A if instruction.mode == MemMode.ACCUMULATOR else (self.read_memory(data, instruction.mode))
+        old_c = self.C
+        self.C = bool((src >> 7) & 1)  # carry is set to 7th bit
+        src = ((src << 1) | old_c) & 0xFF
+        self.setZN(src)
+        if instruction.mode == MemMode.ACCUMULATOR:
+            self.A = src
+        else:
+            self.write_memory(data, instruction.mode, src)
+
+    def ROR(self, instruction: Instruction, data: int):
+        """
+        Rotate Right. Shifts all bits of the accumulator or memory right by one position, moving bit 0
+        into the carry flag and the old carry flag into bit 7.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data or address to be rotated.
+        """
+        src = self.A if instruction.mode == MemMode.ACCUMULATOR else (self.read_memory(data, instruction.mode))
+        old_c = self.C
+        self.C = bool(src & 1)  # carry is set to 0th bit
+        src = ((src >> 1) | (old_c << 7)) & 0xFF
+        self.setZN(src)
+        if instruction.mode == MemMode.ACCUMULATOR:
+            self.A = src
+        else:
+            self.write_memory(data, instruction.mode, src)
+
+    def RTI(self, *_):
+        """
+        Return from Interrupt. Pulls the status register flags and program counter from the stack
+        to restore state after handling an interrupt.
+        """
+        # Pull status out
+        self.set_status(self.stack_pop())
+        # Pull PC out
+        lb = self.stack_pop()
+        hb = self.stack_pop()
+        self.PC = (hb << 8) | lb
+        self.jumped = True
+
+    def RTS(self, instruction: Instruction, data: int):
+        """
+        Return from Subroutine. Pulls the return address from the stack and sets the program counter
+        to that address plus one.
+        """
+        # Pull PC out
+        lb = self.stack_pop()
+        hb = self.stack_pop()
+        self.PC = ((hb << 8) | lb) + 1  # 1 past last instruction
+        self.jumped = True
