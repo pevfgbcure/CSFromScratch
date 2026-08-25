@@ -1124,3 +1124,38 @@ class CPU:
         hb = self.stack_pop()
         self.PC = ((hb << 8) | lb) + 1  # 1 past last instruction
         self.jumped = True
+
+    def SBC(self, instruction: Instruction, data: int):
+        """
+        Subtract memory from accumulator with carry. Updates the accumulator, carry flag,
+        overflow flag, and zero/negative flags.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data to be subtracted from the accumulator.
+        """
+        src = self.read_memory(data, instruction.mode)
+        signed_result = self.A - src - (1 - self.C)
+        # Set overflow.
+        self.V = bool((self.A ^ src) & (self.A ^ signed_result) & 0x80)
+        self.A = (self.A - src - (1 - self.C)) % 256
+        self.C = not (signed_result < 0)  # set carry
+        self.setZN(self.A)
+
+    def SEC(self, *_):
+        """
+        Set Carry Flag. Sets the carry flag to 1.
+        """
+        self.C = True
+
+    def SED(self, *_):
+        """
+        Set Decimal Mode. Sets the decimal mode flag to 1.
+        """
+        self.D = True
+
+    def SEI(self, *_):
+        """
+        Set Interrupt Disable. Sets the interrupt disable flag to 1.
+        """
+        self.I = True
