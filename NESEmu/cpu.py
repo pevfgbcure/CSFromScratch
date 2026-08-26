@@ -1159,3 +1159,36 @@ class CPU:
         Set Interrupt Disable. Sets the interrupt disable flag to 1.
         """
         self.I = True
+
+    def STA(self, instruction: Instruction, data: int):
+        """
+        Store accumulator in memory. Stores the value of the accumulator into memory at the
+        target address calculated from the instruction's mode and data.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to calculate the target address.
+        """
+        self.write_memory(data, instruction.mode, self.A)
+
+    def STX(self, instruction: Instruction, data: int):
+        """
+        Store X register in memory. Stores the value of the X register into memory at the
+        target address calculated from the instruction's mode and data.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to calculate the target address.
+        """
+        self.write_memory(data, instruction.mode, self.X)
+
+    def STY(self, instruction: Instruction, data: int):
+        """
+        Store Y register in memory. Stores the value of the Y register into memory at the
+        target address calculated from the instruction's mode and data.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+            data (int): The data used to calculate the target address.
+        """
+        self.write_memory(data, instruction.mode, self.Y)
