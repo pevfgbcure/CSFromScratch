@@ -1192,3 +1192,53 @@ class CPU:
             data (int): The data used to calculate the target address.
         """
         self.write_memory(data, instruction.mode, self.Y)
+
+    def TAX(self, *_):
+        """
+        Transfer A to X. Transfers the value of the accumulator to the X register.
+        """
+        self.X = self.A
+        self.setZN(self.X)
+
+    def TAY(self, *_):
+        """
+        Transfer A to Y. Transfers the value of the accumulator to the Y register.
+        """
+        self.Y = self.A
+        self.setZN(self.Y)
+
+    def TSX(self, *_):
+        """
+        Transfer Stack Pointer to X. Transfers the value of the stack pointer to the X register.
+        """
+        self.X = self.SP
+        self.setZN(self.X)
+
+    def TXA(self, *_):
+        """
+        Transfer X to A. Transfers the value of the X register to the accumulator.
+        """
+        self.A = self.X
+        self.setZN(self.A)
+
+    def TXS(self, *_):
+        """
+        Transfer X to Stack Pointer. Transfers the value of the X register to the stack pointer.
+        """
+        self.SP = self.X
+
+    def TYA(self, *_):
+        """
+        Transfer Y to A. Transfers the value of the Y register to the accumulator.
+        """
+        self.A = self.Y
+        self.setZN(self.A)
+
+    def unimplemented(self, instruction: Instruction, *_):
+        """
+        Handle unimplemented instructions. Prints an error message indicating the instruction type.
+
+        Args:
+            instruction (Instruction): The instruction being executed.
+        """
+        print(f"{instruction.type.name} is unimplemented.")
