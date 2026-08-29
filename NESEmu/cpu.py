@@ -1242,3 +1242,46 @@ class CPU:
             instruction (Instruction): The instruction being executed.
         """
         print(f"{instruction.type.name} is unimplemented.")
+
+    def step(self):
+        """
+        Execute one CPU instruction cycle.
+
+        Handles stalling, instruction fetching, decoding, execution,
+        and cycle counting including page crossing and branching.
+        """
+        if self.stall > 0:
+            self.stall -= 1
+            self.cpu_ticks += 1
+            return
+
+        opcode = self.read_memory(self.PC, MemMode.ABSOLUTE)
+        self.page_crossed = False
+        self.jumped = False
+        instruction = self.instructions[opcode]
+        data = 0
+
+        for i in range(1, instruction.length):
+            data |= self.read_memory(self.PC + i, MemMode.ABSOLUTE) << ((i - 1) * 8)
+
+        instruction.method(instruction, data)
+
+        branch_instructions = {
+            InstructionType.BCC,
+            InstructionType.BCS,
+            InstructionType.BEQ,
+            InstructionType.BMI,
+            InstructionType.BNE,
+            InstructionType.BPL,
+            InstructionType.BVC,
+            InstructionType.BVS,
+        }
+        if not self.jumped:
+            self.PC += instruction.length
+        elif instruction.type in branch_instructions:
+            # Branch instructions are +1 ticks if they succeeded.
+            self.cpu_ticks += 1
+        self.cpu_ticks += instruction.ticks
+
+        if self.page_crossed:
+            self.cpu_ticks += instruction.page_ticks
