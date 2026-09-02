@@ -113,3 +113,36 @@ class PPU:
         self.cycle: int = 0
         # Pixels for screen
         self.display_buffer: np.ndarray = np.zeros((NES_WIDTH, NES_HEIGHT), dtype=np.uint32)
+
+    def step(self):
+        """
+        Execute one PPU cycle.
+
+        Handles background and sprite drawing during the visible scanlines,
+        sets VBlank status flags at the appropriate times, and updates the
+        scanline and cycle counters.
+        """
+        # A simplified PPU (only draws once per frame).
+        if (self.scanline == 240) and (self.cycle == 256):
+            if self.show_background:
+                self.draw_background()
+            if self.show_sprites:
+                self.draw_sprites(False)
+        if (self.scanline == 241) and (self.cycle == 1):
+            self.status |= 0b10000000  # set vblank
+        if (self.scanline == 261) and (self.cycle == 1):
+            # Vblank off, clear sprite zero, clear sprite overflow
+            self.status |= 0b00011111
+
+        self.cycle += 1
+        if self.cycle > 340:
+            self.cycle = 0
+            self.scanline += 1
+            if self.scanline > 261:
+                self.scanline = 0
+
+    def draw_background(self):
+        pass
+
+    def draw_sprites(self, background_transparent: bool):
+        pass
