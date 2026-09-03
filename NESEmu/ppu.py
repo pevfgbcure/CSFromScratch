@@ -142,7 +142,52 @@ class PPU:
                 self.scanline = 0
 
     def draw_background(self):
-        pass
+        """
+        Draw the background tiles from nametables to the display buffer.
+
+        This method iterates through the nametable entries, reads tile indices,
+        applies palette attributes from the attribute table, and renders each
+        tile's pixel data to the display buffer using the NES palette.
+        """
+        attribute_table_address = self.nametable_address + 960
+        for y in range(30):
+            for x in range(32):
+                tile_address = self.nametable_address + y * 32 + x
+                nametable_entry = self.read_memory(tile_address)
+                attr_x = x // 4
+                attr_y = x // 4
+                attribute_address = attribute_table_address + attr_y * 8 + attr_x
+                attribute_entry = self.read_memory(attribute_address)
+                block = (y & 0x02) | ((x & 0x02) >> 1)
+                attribute_bits = 0
+                if block == 0:
+                    attribute_bits = (attribute_entry & 0b00000011) << 2
+                elif block == 1:
+                    attribute_bits = attribute_entry & 0b00001100
+                elif block == 2:
+                    attribute_bits = (attribute_entry & 0b00110000) >> 2
+                elif block == 3:
+                    attribute_bits = (attribute_entry & 0b11000000) >> 4
+                else:
+                    print("Invalid block")
+
+                for fine_y in range(8):
+                    low_order = self.read_memory(self.background_pattern_table_address + nametable_entry * 16 + fine_y)
+                    high_order = self.read_memory(
+                        self.background_pattern_table_address + nametable_entry * 16 + 8 + fine_y
+                    )
+                    for fine_x in range(8):
+                        pixel = (
+                            ((low_order >> (7 - fine_x)) & 1)
+                            | (((high_order >> (7 - fine_x)) & 1) << 1)
+                            | attribute_bits
+                        )
+                        x_screen_loc = x * 8 + fine_x
+                        y_screen_loc = y * 8 + fine_y
+                        transparent = (pixel & 3) == 0
+                        # If the background is transparent, use the first color in the palette.
+                        color = self.palette[0] if transparent else self.palette[pixel]
+                        self.display_buffer[x_screen_loc, y_screen_loc] = NES_PALETTE[color]
 
     def draw_sprites(self, background_transparent: bool):
         pass
