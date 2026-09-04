@@ -190,4 +190,64 @@ class PPU:
                         self.display_buffer[x_screen_loc, y_screen_loc] = NES_PALETTE[color]
 
     def draw_sprites(self, background_transparent: bool):
-        pass
+        """Draw sprites from the Object Attribute Memory (OAM) to the display buffer.
+
+        This method iterates through the OAM in reverse, gets their x and y postions,
+        checks if the sprite should be flipped horizontally or vertically, gets each
+        pixel from the pattern table and draws it to the display buffer. It also uses
+        the zeroth sprite as a simple form of collision detection.
+        """
+        for i in range(SPR_RAM_SIZE - 4, -4, -4):
+            y_position = self.spr[i]
+            if y_position == 0xFF:  # 0xFF is a marker for no sprite data
+                continue
+            background_sprite = bool((self.spr[i + 2] >> 5) & 1)
+            x_position = self.spr[i + 3]
+
+            for x in range(x_position, x_position + 8):
+                if x >= NES_WIDTH:
+                    break
+                for y in range(y_position, y_position + 8):
+                    if y >= NES_HEIGHT:
+                        break
+                    flip_y = bool((self.spr[i + 2] >> 7) & 1)
+                    sprite_line = y - y_position
+                    if flip_y:
+                        sprite_line = 7 - sprite_line
+
+                    index = self.spr[i + 1]
+                    bit0s_address = self.spr_pattern_table_address + (index * 16) + sprite_line
+                    bit1s_address = self.spr_pattern_table_address + (index * 16) + sprite_line + 8
+                    bit0s = self.read_memory(bit0s_address)
+                    bit1s = self.read_memory(bit1s_address)
+                    bit3and2 = ((self.spr[i + 2]) & 3) << 2
+
+                    flip_x = bool((self.spr[i + 2] >> 6) & 1)
+                    x_loc = x - x_position  # position within sprite
+                    if not flip_x:
+                        x_loc = 7 - x_loc
+
+                    bit1and0 = (((bit1s >> x_loc) & 1) << 1) | (((bit0s >> x_loc) & 1) << 0)
+                    if bit1and0 == 0:  # transparent pixel... skip
+                        continue
+
+                    # This is not transparent. Is it a sprite zero hit therefore?
+                    # Check that left 8 pixel clipping is not off.
+                    if (
+                        (i == 0)
+                        and (not background_transparent)
+                        and (
+                            not (x < 8 and (not self.left_8_sprite_show or not self.left_8_background_show))
+                            and self.show_background
+                            and self.show_sprites
+                        )
+                    ):
+                        self.status |= 0b01000000
+                    # Need to do this after sprite zero checking so we still count background
+                    # sprites for sprite zero checks
+                    if background_sprite and not background_transparent:
+                        continue  # background sprite shouldn't draw over opaque pixels
+
+                    color = bit3and2 | bit1and0
+                    color = self.read_memory(0x3F10 + color)  # from palette
+                    self.display_buffer[x, y] = NES_PALETTE[color]
