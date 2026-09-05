@@ -254,3 +254,72 @@ class PPU:
                     color = bit3and2 | bit1and0
                     color = self.read_memory(0x3F10 + color)  # from palette
                     self.display_buffer[x, y] = NES_PALETTE[color]
+
+    def read_register(self, address: int) -> int:
+        """
+        Read from a PPU register.
+
+        Args:
+            address: The PPU register address to read from.
+
+        Returns:
+            The value read from the register.
+        """
+        if address == 0x2002:
+            self.addr_write_latch = False
+            current = self.status
+            self.status &= 0b01111111  # clear vblank on read to 0x2002
+            return current
+        elif address == 0x2004:
+            return self.spr[self.spr_address]
+        elif address == 0x2007:
+            if (self.addr % 0x4000) < 0x3F00:
+                value = self.buffer2007
+                self.buffer2007 = self.read_memory(self.addr)
+            else:
+                value = self.read_memory(self.addr)
+                self.buffer2007 = self.read_memory(self.addr - 0x1000)
+            # Every read to 0x2007 there is and increment.
+            self.addr += self.address_increment
+            return value
+        else:
+            raise LookupError(f"Error: Unrecognized PPU read {address:X}")
+
+    def write_register(self, address: int, value: int):
+        """
+        Write to a PPU register.
+
+        Args:
+            address: The PPU register address to write to.
+            value: The value to write to the register.
+        """
+        if address == 0x2000:  # Control Register 1
+            self.nametable_address = 0x2000 + (value & 0b00000011) * 0x400
+            self.address_increment = 32 if (value & 0b00000100) else 1
+            self.spr_pattern_table_address = ((value & 0b00001000) >> 3) * 0x1000
+            self.background_pattern_table_address = ((value & 0b00010000) >> 4) * 0x1000
+            self.generate_nmi = bool(value & 0b10000000)
+        elif address == 0x2001:  # Control Register 2
+            self.show_background = bool(value & 0b00001000)
+            self.show_sprites = bool(value & 0b00010000)
+            self.left_8_background_show = bool(value & 0b00000010)
+            self.left_8_sprite_show = bool(value & 0b00000100)
+        elif address == 0x2003:
+            self.spr_address = value
+        elif address == 0x2004:
+            self.spr[self.spr_address] = value
+            self.spr_address += 1
+        elif address == 0x2005:  # scroll
+            pass
+        elif address == 0x2006:
+            # Based on https://wiki.nesdev.org/w/index.php/PPU_scrolling
+            if not self.addr_write_latch:  # first write
+                self.addr = (self.addr & 0x00FF) | ((value & 0xFF) << 8)
+            else:  # second write
+                self.addr = (self.addr & 0xFF00) | (value & 0xFF)
+                self.addr_write_latch = not self.addr_write_latch
+        elif address == 0x2007:
+            self.write_memory(self.addr, value)
+            self.addr += self.address_increment
+        else:
+            raise LookupError(f"Error: Unrecognized PPU write {address:X}")
