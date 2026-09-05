@@ -196,6 +196,9 @@ class PPU:
         checks if the sprite should be flipped horizontally or vertically, gets each
         pixel from the pattern table and draws it to the display buffer. It also uses
         the zeroth sprite as a simple form of collision detection.
+
+        Args:
+            background_transparent: Whether the background is currently transparent.
         """
         for i in range(SPR_RAM_SIZE - 4, -4, -4):
             y_position = self.spr[i]
