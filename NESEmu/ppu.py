@@ -323,3 +323,61 @@ class PPU:
             self.addr += self.address_increment
         else:
             raise LookupError(f"Error: Unrecognized PPU write {address:X}")
+
+    def read_memory(self, address: int) -> int:
+        """Read from PPU memory space.
+
+        Args:
+            address: The memory address to read from.
+
+        Returns:
+            The value read from memory.
+        """
+        address = address % 0x4000  # mirror >0x4000
+        if address < 0x2000:  # pattern tables
+            return self.rom.read_cartridge(address)
+        elif address < 0x3F00:  # nametables
+            address = (address - 0x2000) % 0x1000  # 3000-3EFF is a mirror
+            if self.rom.vertical_mirroring:
+                address = address % 0x0800
+            else:  # horizontal mirroring
+                if (address >= 0x400) and (address < 0xC00):
+                    address -= 0x400
+                elif address >= 0xC00:
+                    address -= 0x800
+            return self.nametables[address]
+        elif address < 0x4000:  # palette memory
+            address = (address - 0x3F00) % 0x20
+            if (address > 0x0F) and ((address % 0x04) == 0):
+                address -= 0x10
+            return self.palette[address]
+        else:
+            raise LookupError(f"Error: Unrecognized PPU read at {address:X}")
+
+    def write_memory(self, address: int, value: int):
+        """Write to PPU memory space.
+
+        Args:
+            address: The memory address to write to.
+            value: The value to write to the memory.
+        """
+        address = address % 0x4000  # mirror >0x4000
+        if address < 0x2000:  # pattern tables
+            return self.rom.write_cartridge(address, value)
+        elif address < 0x3F00:  # nametables
+            address = (address - 0x2000) % 0x1000  # 3000-3EFF is a mirror
+            if self.rom.vertical_mirroring:
+                address = address % 0x0800
+            else:  # horizontal mirroring
+                if (address >= 0x400) and (address < 0xC00):
+                    address = address - 0x400
+                elif address >= 0xC00:
+                    address = address - 0x800
+            self.nametables[address] = value
+        elif address < 0x4000:  # palette memory
+            address = (address - 0x3F00) % 0x20
+            if (address > 0x0F) and ((address % 0x04) == 0):
+                address = address - 0x10
+            self.palette[address] = value
+        else:
+            raise LookupError(f"Error: Unrecognized PPU write at {address:X}")
