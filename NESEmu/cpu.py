@@ -6,7 +6,6 @@ from enum import Enum
 from typing import Callable
 
 from NESEmu.ppu import PPU, SPR_RAM_SIZE
-
 from NESEmu.rom import ROM
 
 # List various memory access schemes used by the 6502 CPU.
@@ -603,10 +602,10 @@ class CPU:
 
         opcode = self.read_memory(self.PC, MemMode.ABSOLUTE)
         instruction = self.instructions[opcode]
-        data1 = " " if instruction.length < 2 else f"{self.read_memory(self.PC + 1, MemMode.ABSOLUTE):02X}"
-        data2 = " " if instruction.length < 3 else f"{self.read_memory(self.PC + 2, MemMode.ABSOLUTE):02X}"
+        data1 = "  " if instruction.length < 2 else f"{self.read_memory(self.PC + 1, MemMode.ABSOLUTE):02X}"
+        data2 = "  " if instruction.length < 3 else f"{self.read_memory(self.PC + 2, MemMode.ABSOLUTE):02X}"
         return (
-            f"{self.PC:04X} {opcode:02X} {data1} {data2} {instruction.type.name}{29 * ' '}"
+            f"{self.PC:04X}  {opcode:02X} {data1} {data2}  {instruction.type.name}{29 * ' '}"
             f"A:{self.A:02X} X:{self.X:02X} Y:{self.Y:02X} P:{self.status:02X} SP:{self.SP:02X}"
         )
 
