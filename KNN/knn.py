@@ -3,6 +3,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Protocol, Self
 
+import numpy as np
+
 
 class DataPoint(Protocol):
     """Protocol for data points used in KNN classification."""
@@ -86,3 +88,31 @@ class KNN[DP: DataPoint]:
         """
         neighbors = self.nearest(k, data_point)
         return Counter(neighbor.kind for neighbor in neighbors).most_common(1)[0][0]
+
+    def predict(self, k: int, data_point: DP, property_name: str) -> float:
+        """Predict a scalar property value using the K-Nearest Neighbors algorithm.
+
+        Args:
+            k: The number of nearest neighbors to use for prediction.
+            data_point: The data point to predict for.
+            property_name: The name of the property to predict.
+
+        Returns:
+            The predicted value of the specified property.
+        """
+        neighbors = self.nearest(k, data_point)
+        return sum([getattr(neighbor, property_name) for neighbor in neighbors]) / len(neighbors)
+
+    def predict_array(self, k: int, data_point: DP, property_name: str) -> np.ndarray:
+        """Predict an array property value using the K-Nearest Neighbors algorithm.
+
+        Args:
+            k: The number of nearest neighbors to use for prediction.
+            data_point: The data point to predict for.
+            property_name: The name of the property to predict.
+
+        Returns:
+            The predicted value of the specified property.
+        """
+        neighbors = self.nearest(k, data_point)
+        return np.sum([getattr(neighbor, property_name) for neighbor in neighbors], axis=0) / len(neighbors)
