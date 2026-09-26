@@ -36,6 +36,14 @@ class FishTestCase(unittest.TestCase):
         classify_fish: str = fish_knn.classify(k, test_fish)
         self.assertEqual(classify_fish, "Parkki")
 
+    def test_predict(self):
+        """Test predicting a scalar property value using KNN."""
+        k: int = 5
+        fish_knn = KNN(Fish, self.data_file)
+        test_fish: Fish = Fish("", 0.0, 20.0, 23.5, 24.0, 10.0, 4.0)
+        predict_fish: float = fish_knn.predict(k, test_fish, "weight")
+        self.assertEqual(predict_fish, 165.0)
+
 
 class DigitsTestCase(unittest.TestCase):
     """Test case for digit classification using KNN."""
